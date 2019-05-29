@@ -79,14 +79,6 @@ public class TreeCompletion {
 			newinternalnode.adoptChild(newNode);
 			return tree;
 			
-			
-////			System.err.println("hey");
-//			STITree s = new STITree();
-//			s.getRoot().setName("hey");
-//			s.getRoot().adoptChild(newNode);
-//			s.getRoot().adoptChild(tree.getRoot());
-////			System.err.println(s.toNewick());
-//			return s;
 		}
 		
 	}
@@ -157,8 +149,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 				else{
 					((STINode) gtNode).setData("R");
 				}
-				System.err.println("node label: "+gtNode.getName()+" id:"+ gtNode.getID()+" "+ ((STINode) gtNode).getData());
-//				String s = (String) ((STINode) gtNode).getData();
+//				System.err.println("node label: "+gtNode.getName()+" id:"+ gtNode.getID()+" "+ ((STINode) gtNode).getData());
 			}
 			else{
 				boolean allred = true;
@@ -187,13 +178,14 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 						((STINode) gtNode).setData("BM");
 					else
 						((STINode) gtNode).setData("B");
-					System.err.println("node name: "+gtNode.getName()+" id: "+ gtNode.getID()+" "+ ((STINode) gtNode).getData());
+//					System.err.println("node name: "+gtNode.getName()+" id: "+ gtNode.getID()+" "+ ((STINode) gtNode).getData());
 			}
 		}
 		
 	}
 	
 	static ArrayList<STITree> treeCompletionRepeat(STITree gTree, STITree sTree){
+		int REPEATS = 1;
 		SchieberVishkinLCA lcaLookup = new SchieberVishkinLCA(sTree);
 		String[] gtLeaves = gTree.getLeaves();
 		String[] stLeaves = sTree.getLeaves();
@@ -204,15 +196,13 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 		for(String s:common){
 			temps.add(new STITree(sTree));
 		}
-		int i = 0;
-		for(String root :common){
-			System.err.println();
+
+		for(int i=0 ; i< REPEATS && i < common.size(); i++){
+			String root = common.get(i);
+			System.err.println("Both trees are rooted at "+root);
 			temps.get(i).rerootTreeAtNode(temps.get(i).getNode(root));
-//			sTree.rerootTreeAtNode(sTree.getNode(root));
-//			SchieberVishkinLCA lcaLookup2 = new SchieberVishkinLCA(temps.get(i));
 			gTree.rerootTreeAtNode(gTree.getNode(root));
 			results.add(treeCompletion(gTree, temps.get(i)));
-			i++;
 		}
 		return results;
 		
@@ -258,7 +248,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	            	else{
 	            		sTree = addToTreePolytomy(sTree, snode,  redChildren);
 	            	}
-	            	System.err.println(sTree.toNewick());
+//	            	System.err.println(sTree.toNewick());
 	            	
 				}
 	            nodeStack.pop(); 
@@ -269,8 +259,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	            for(TNode t: mynode.getChildren())
 	            		nodeStack.push(t); 
 
-	    } 
-//	        System.err.println("* "+sTree.toNewick());  
+	    }  
 	        return sTree;
 	}
 	
@@ -278,8 +267,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 //oneTreeCompletion
 //		for (Tree stTree : stTrees) {
 		HashMap<Integer, Integer> LCAMap = new HashMap<Integer,Integer>();
-		System.err.println(stTree);
-		System.err.println(stTree.getRoot().getID());
+//		System.err.println(stTree.getRoot().getID());
 			SchieberVishkinLCA lcaLookup = new SchieberVishkinLCA(stTree);
 //			for (Tree gtTree : gtTrees) {
 				Stack<TNode> stack = new Stack<TNode>();

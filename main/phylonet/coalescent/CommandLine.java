@@ -604,6 +604,7 @@ public class CommandLine{
 		try {
 
 		    if (config.getFile("extra trees") != null) {
+		    
 		    	readInputTrees(extraTrees, 
 		        	readTreeFileAsString(config.getFile("extra trees")), 
 		                extrarooted, true, false, null, 1, null);
@@ -613,11 +614,16 @@ public class CommandLine{
 		        //****************************************************************************
 	        	TreeCompletion tc = new TreeCompletion();
 	        	//STITree t = tc.treeCompletion((STITree)mainTrees.get(0), (STITree)extraTrees.get(0));
-	        	ArrayList<STITree> res = tc.treeCompletionRepeat((STITree)mainTrees.get(0), (STITree)extraTrees.get(0));
-	        	for(STITree t: res)
-	        		System.out.println(t.toNewick());
-	        	System.err.println("\n*\n");
-	        	System.exit(0);
+	        	List<Tree> res = new ArrayList<Tree>();
+	        	for(Tree tr:mainTrees){
+	        		res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)extraTrees.get(0)));
+	        	}
+	  //      	ArrayList<STITree> res = tc.treeCompletionRepeat((STITree)mainTrees.get(0), (STITree)extraTrees.get(0));
+	        	for(Tree tr: res)
+	        		System.out.println(tr.toNewick());
+	        	mainTrees = res;
+	        	mainTrees = new ArrayList<Tree>(res);
+	        	System.err.println("All gene trees are converted to be compatible with species tree.");
 	        	
 		    }
 		    

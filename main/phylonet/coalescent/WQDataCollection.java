@@ -216,8 +216,10 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 								this.addSpeciesBitSetToX(restrictedBitSet);
 							}
 							gradient = this.clusters.getClusterCount() - b;
+							
 						}
 						gradient = this.clusters.getClusterCount() - b;
+						System.err.println("round "+ii+" gradient:"+gradient);
 					}
 
 				}
