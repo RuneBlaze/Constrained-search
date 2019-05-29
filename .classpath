@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="main"/>
+	<classpathentry kind="lib" path="Astral/lib/colt.jar"/>
+	<classpathentry kind="lib" path="Astral/lib/JSAP-2.1.jar"/>
+	<classpathentry kind="lib" path="Astral/lib/main.jar"/>
+	<classpathentry kind="lib" path="bin/Astral/lib/colt.jar"/>
+	<classpathentry kind="lib" path="bin/Astral/lib/JSAP-2.1.jar"/>
+	<classpathentry kind="lib" path="bin/Astral/lib/main.jar"/>
+	<classpathentry kind="lib" path="bin/lib/colt.jar"/>
+	<classpathentry kind="lib" path="bin/lib/JSAP-2.1.jar"/>
+	<classpathentry kind="lib" path="bin/lib/main.jar"/>
+	<classpathentry kind="lib" path="lib/colt.jar"/>
+	<classpathentry kind="lib" path="lib/JSAP-2.1.jar"/>
+	<classpathentry kind="lib" path="lib/main.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="main"/>
+</classpath>
