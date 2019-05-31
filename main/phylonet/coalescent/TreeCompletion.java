@@ -193,7 +193,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 		common.retainAll(Arrays.asList(stLeaves));
 		ArrayList<STITree> results = new ArrayList<STITree>();
 		ArrayList<STITree> temps = new ArrayList<STITree>();
-		for(String s:common){
+		for(int i=0; i< REPEATS; i++){
 			temps.add(new STITree(sTree));
 		}
 		
@@ -244,7 +244,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	            			redchild += 1;
 	            	}
 	            	int id = LCAMap.get(mynode.getID());
-	            	System.err.println("id: "+id);
+//	            	System.err.println("id: "+id);
 	    	        STINode snode = sTree.getNode(id);
 	            	if(redchild ==1 && mynode.getChildCount() == 2){	            	
 		    	        sTree = addToTree(sTree, snode, (STINode) redChildren.get(0));

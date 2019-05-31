@@ -621,8 +621,9 @@ public class CommandLine{
 	  //      	ArrayList<STITree> res = tc.treeCompletionRepeat((STITree)mainTrees.get(0), (STITree)extraTrees.get(0));
 	        	for(Tree tr: res)
 	        		System.out.println(tr.toNewick());
-	        	mainTrees = res;
-	        	mainTrees = new ArrayList<Tree>(res);
+//	        	mainTrees = res;
+//	        	mainTrees = new ArrayList<Tree>(res);
+	        	extraTrees = new ArrayList<Tree>(res);
 	        	System.err.println("All gene trees are converted to be compatible with species tree.");
 	        	
 		    }
