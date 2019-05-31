@@ -185,7 +185,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	}
 	
 	static ArrayList<STITree> treeCompletionRepeat(STITree gTree, STITree sTree){
-		int REPEATS = 1;
+		int REPEATS = 5;
 		SchieberVishkinLCA lcaLookup = new SchieberVishkinLCA(sTree);
 		String[] gtLeaves = gTree.getLeaves();
 		String[] stLeaves = sTree.getLeaves();
@@ -196,9 +196,14 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 		for(String s:common){
 			temps.add(new STITree(sTree));
 		}
+		
+		ArrayList<Integer> randomRoots = new ArrayList<Integer>();
+		for(int i=0;i< REPEATS && i < common.size() ;i++){
+			randomRoots.add(GlobalMaps.random.nextInt(common.size()));
+		}
 
 		for(int i=0 ; i< REPEATS && i < common.size(); i++){
-			String root = common.get(i);
+			String root = common.get(randomRoots.get(i));
 			System.err.println("Both trees are rooted at "+root);
 			temps.get(i).rerootTreeAtNode(temps.get(i).getNode(root));
 			gTree.rerootTreeAtNode(gTree.getNode(root));
