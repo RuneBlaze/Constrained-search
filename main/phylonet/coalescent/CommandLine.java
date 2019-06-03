@@ -40,7 +40,7 @@ import com.martiansoftware.jsap.Switch;
 import com.martiansoftware.jsap.stringparsers.FileStringParser;
 
 public class CommandLine{
-    protected static String _versinon = "5.6.3";
+    protected static String _versinon = "5.6.4";
 
     protected static SimpleJSAP jsap;
     
@@ -550,7 +550,7 @@ public class CommandLine{
 		System.err.println("Scoring: " + toScore.size() +" trees");
 		
 		AbstractInference inference =
-		        initializeInference(criterion, mainTrees, new ArrayList<Tree>(), new ArrayList<Tree>(), options);           
+		        initializeInference(criterion, mainTrees, new ArrayList<Tree>(), new ArrayList<Tree>(), options, null);           
 		double score = Double.NEGATIVE_INFINITY;
 		List<Tree> bestTree = new ArrayList<Tree>(); 
 		for (String trs : toScore) {   
@@ -599,6 +599,7 @@ public class CommandLine{
 		System.err.println("All output trees will be *arbitrarily* rooted at "+outgroup);
 		
 		List<Tree> extraTrees = new ArrayList<Tree>();
+		List<Tree> completedTrees = new ArrayList<Tree>();
 		List<Tree> toRemoveExtraTrees = new ArrayList<Tree>();
 		
 		try {
@@ -615,6 +616,7 @@ public class CommandLine{
 	        	TreeCompletion tc = new TreeCompletion();
 	        	//STITree t = tc.treeCompletion((STITree)mainTrees.get(0), (STITree)extraTrees.get(0));
 	        	List<Tree> res = new ArrayList<Tree>();
+
 	        	for(Tree tr:mainTrees){
 	        		res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)extraTrees.get(0)));
 	        	}
@@ -623,7 +625,7 @@ public class CommandLine{
 	        		System.out.println(tr.toNewick());
 //	        	mainTrees = res;
 //	        	mainTrees = new ArrayList<Tree>(res);
-	        	extraTrees = new ArrayList<Tree>(res);
+	        	completedTrees = new ArrayList<Tree>(res);
 	        	System.err.println("All gene trees are converted to be compatible with species tree.");
 	        	
 		    }
@@ -660,7 +662,7 @@ public class CommandLine{
 		    readInputTrees(trees, input, rooted, false, false, options.getMinLeaves(),
             		config.getInt("branch annotation level"), null);
 		    bootstraps.add(runOnOneInput(criterion, 
-		             extraTrees,toRemoveExtraTrees, outbuffer, trees, null, outgroup, options));
+		             extraTrees,toRemoveExtraTrees, outbuffer, trees, null, outgroup, options,null));
 		}
 		
 		if (bootstraps != null && bootstraps.size() != 0) {
@@ -673,14 +675,14 @@ public class CommandLine{
 
 		System.err.println("\n======== Running the main analysis");
 		runOnOneInput(criterion, extraTrees, toRemoveExtraTrees,outbuffer, mainTrees, bootstraps, 
-		        outgroup, options);
+		        outgroup, options, completedTrees);
 		   
 		outbuffer.close();
 	}
 
     private static Tree runOnOneInput(int criterion, List<Tree> extraTrees,
     		List<Tree> toRemoveExtraTrees, BufferedWriter outbuffer, List<Tree> input, 
-            Iterable<Tree> bootstraps, String outgroup, Options options) {
+            Iterable<Tree> bootstraps, String outgroup, Options options, List<Tree> completedTrees) {
         long startTime;
         startTime = System.currentTimeMillis();
 //        int removedTrees = 0;
@@ -695,9 +697,10 @@ public class CommandLine{
 //        		it.remove();
 //        	}
 //        }
-//        System.err.println("removed trees"+ removedTrees);	
+//        System.err.println("removed trees"+ removedTrees);
+        
         AbstractInference inference =
-                initializeInference(criterion, input, extraTrees,toRemoveExtraTrees, options);
+                initializeInference(criterion, input, extraTrees,toRemoveExtraTrees, options, completedTrees);
         
         inference.setup(); 
         
@@ -747,13 +750,13 @@ public class CommandLine{
 
     private static AbstractInference initializeInference(int criterion, 
             List<Tree> trees, List<Tree> extraTrees,
-            List<Tree> toRemoveExtraTrees, Options options) {
+            List<Tree> toRemoveExtraTrees, Options options, List<Tree> completedTrees) {
         AbstractInference inference;		
 		if (criterion == 1 || criterion == 0) {
 			inference = new DLInference(options, 
-					trees, extraTrees, toRemoveExtraTrees);			
+					trees, extraTrees, toRemoveExtraTrees, completedTrees);			
 		} else if (criterion == 2) {
-			inference = new WQInference(options, trees, extraTrees, toRemoveExtraTrees);
+			inference = new WQInference(options, trees, extraTrees, toRemoveExtraTrees,completedTrees);
 		} else {
 			throw new RuntimeException("criterion not set?");
 		}		

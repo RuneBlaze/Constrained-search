@@ -27,8 +27,8 @@ public class WQInference extends AbstractInference<Tripartition> {
 	int forceAlg = -1;
 	long maxpossible;
 
-	public WQInference(Options inOptions, List<Tree> trees, List<Tree> extraTrees, List<Tree> toRemoveExtraTrees) {
-		super(inOptions, trees, extraTrees, toRemoveExtraTrees);
+	public WQInference(Options inOptions, List<Tree> trees, List<Tree> extraTrees, List<Tree> toRemoveExtraTrees, List<Tree> completedTrees) {
+		super(inOptions, trees, extraTrees, toRemoveExtraTrees,completedTrees);
 
 		this.forceAlg = inOptions.getAlg();
 	}

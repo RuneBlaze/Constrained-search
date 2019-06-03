@@ -31,6 +31,7 @@ public abstract class AbstractInference<T> {
 	protected List<Tree> trees;
 	protected List<Tree> extraTrees = null;
 	protected List<Tree> toRemoveExtraTrees = null;
+	protected List<Tree> completedTrees = null;
 	protected boolean removeExtraTree;
 	//protected boolean exactSolution;
 	
@@ -51,13 +52,14 @@ public abstract class AbstractInference<T> {
 	double estimationFactor = 0;
 	
 	public AbstractInference(Options options, List<Tree> trees,
-			List<Tree> extraTrees, List<Tree> toRemoveExtraTrees) {
+			List<Tree> extraTrees, List<Tree> toRemoveExtraTrees, List<Tree> completedTrees) {
 		super();
 		this.options = options;
 		this.trees = trees;
 		this.extraTrees = extraTrees;
 		this.removeExtraTree = options.isRemoveExtraTree();
 		this.toRemoveExtraTrees = toRemoveExtraTrees;
+		this.completedTrees = completedTrees;
 		
 		df = new DecimalFormat();
 		df.setMaximumFractionDigits(2);
@@ -308,7 +310,8 @@ public abstract class AbstractInference<T> {
 	      
 		if (extraTrees != null && extraTrees.size() > 0) {		
 	        System.err.println("calculating extra bipartitions from extra input trees ...");
-			dataCollection.addExtraBipartitionsByInput(extraTrees,options.isExtrarooted());
+	        
+			dataCollection.addExtraBipartitionsByInput(completedTrees,options.isExtrarooted(), this, extraTrees.get(0));
 			int s = this.dataCollection.clusters.getClusterCount();
 			/*
 			 * for (Integer c: clusters2.keySet()){ s += clusters2.get(c).size(); }
