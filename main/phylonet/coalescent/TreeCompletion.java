@@ -347,7 +347,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 //						}
 					}
 				}
-				System.err.println(LCAMap);
+//				System.err.println(LCAMap);
 				return LCAMap;
 			}
 	
