@@ -399,6 +399,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 			upgma.add(sti);
 		}
 		Tree UPGMA = Utils.buildTreeFromClusters(upgma, GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier(), false);
+		System.err.println("UPGMA: "+UPGMA.toNewick());
 		baseTrees.add(UPGMA);
 		
 
@@ -423,14 +424,16 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 		
 		System.err.println("Number of clusters added from completed trees: " + clusters.getClusterCount());
 		
-		System.err.println("***heyy");
 		int gradiant = 0;
 		int prev = clusters.getClusterCount();
-		for (int l = 0; l < 4; l++) {
+		int secondRoundSampling = getSamplingRepeationFactor(inference.options.getSamplingrounds());
+		
+		for (int l = 0; l < secondRoundSampling; l++) {
 
 			System.err
 					.println("calculating extra bipartitions to be added at level "
 							+ inference.getAddExtra() + " ...");
+			
 			this.addExtraBipartitionByHeuristics(completedTrees,
 					GlobalMaps.taxonNameMap.getSpeciesIdMapper()
 							.getSTTaxonIdentifier(),
@@ -950,17 +953,18 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 		allGreedies = Utils.greedyConsensus(contractedTrees,
 				this.GREEDY_ADDITION_THRESHOLDS, true, 1, tid, true);
 		
-		for(Tree tr:allGreedies){
-			for (TNode greedyNode : tr.postTraverse()) {
-				if (greedyNode.getChildCount() > 2){
-					System.err.println("pol: "+ greedyNode.getChildCount());
-				}
-			}
-		}
+//		for(Tree tr:allGreedies){
+//			for (TNode greedyNode : tr.postTraverse()) {
+//				if (greedyNode.getChildCount() > 2){
+//					System.err.println("pol: "+ greedyNode.getChildCount());
+//				}
+//			}
+//		}
 		TreeCompletion tc = new TreeCompletion();
     	List<Tree> res = new ArrayList<Tree>();
+
     	for(Tree tr:allGreedies){
-    		res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)extraTree));
+    		res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)extraTree,1));
     	}
     	allGreedies = new ArrayList<Tree>(res);
 		
@@ -1038,6 +1042,16 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
                 }             
                 stack.add(greedyBS);
                 
+                /*
+                 * 
+                 * This part is different from ASTRAL-II heuristics
+                 */
+                STITreeCluster cluster = GlobalMaps.taxonNameMap
+						.getSpeciesIdMapper().getSTTaxonIdentifier()
+						.newCluster();
+				cluster.setCluster(greedyBS);
+				addSpeciesBipartitionToX(cluster);
+				
 				if (greedyNode.getChildCount() <= 2) {
 //					if(greedyNode.getChildCount() > polytomySizeLimit)
 //						System.err.println("polytomy of size "+greedyNode.getChildCount()+" discarded ");
@@ -1086,7 +1100,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 							|| (th < this.GREEDY_DIST_ADDITTION_LAST_THRESHOLD_INDX && j < this.GREEDY_ADDITION_DEFAULT_RUNS)) && greedyNode.getChildCount() <= polytomySizeLimit;
 					
 					quadratic = false;
-					if (this.sampleAndResolve(childbslist, res, quadratic, sm, tid,true, false) && k < GREEDY_ADDITION_MAX) {
+					if (this.sampleAndResolve(childbslist, contractedTrees, quadratic, sm, tid,true, false) && k < GREEDY_ADDITION_MAX) {
 						k += this.GREEDY_ADDITION_IMPROVEMENT_REWARD;
 
 						if(k > max)

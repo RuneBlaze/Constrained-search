@@ -184,8 +184,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 		
 	}
 	
-	static ArrayList<STITree> treeCompletionRepeat(STITree gTree, STITree sTree){
-		int REPEATS = 5;
+	static ArrayList<STITree> treeCompletionRepeat(STITree gTree, STITree sTree, int REPEATS){
 		SchieberVishkinLCA lcaLookup = new SchieberVishkinLCA(sTree);
 		String[] gtLeaves = gTree.getLeaves();
 		String[] stLeaves = sTree.getLeaves();
