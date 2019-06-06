@@ -141,19 +141,12 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 						.newCluster();
 				cluster.setCluster(bs);
 				stack.add(cluster);
-				
-				//boolean bug = false;
+
 				try {
 					if (addSpeciesBipartitionToX(cluster)) {
 
 					}
 				} catch (Exception e) {
-					//bug = true;
-//					System.err.println("node : "+node.toString());
-//					System.err.println("cluster : "+cluster);
-//					System.err.println(childbslist.size());
-//					System.err.println(childbslist);
-//					System.err.println("bs : "+bs);
 					e.printStackTrace(); 
 				}
 				

@@ -141,17 +141,17 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	}
 	
 	static void nodeColoring(STITree stTree, Tree gtTree) {
+		Set<String> stLeaves = new HashSet<String>(Arrays.asList(stTree.getLeaves())); 
+		
 		for (TNode gtNode : gtTree.postTraverse()) {
 			if(gtNode.isLeaf()){
 				String name = gtNode.getName();
-				if (Arrays.asList(stTree.getLeaves()).contains(name)){////////************
-					
+				if (stLeaves.contains(name)){
 					((STINode) gtNode).setData("G");
 				}
 				else{
 					((STINode) gtNode).setData("R");
 				}
-//				System.err.println("node label: "+gtNode.getName()+" id:"+ gtNode.getID()+" "+ ((STINode) gtNode).getData());
 			}
 			else{
 				boolean allred = true;
@@ -180,7 +180,6 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 						((STINode) gtNode).setData("BM");
 					else
 						((STINode) gtNode).setData("B");
-//					System.err.println("node name: "+gtNode.getName()+" id: "+ gtNode.getID()+" "+ ((STINode) gtNode).getData());
 			}
 		}
 		
@@ -205,7 +204,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 
 		for(int i=0 ; i< REPEATS && i < common.size(); i++){
 			String root = common.get(randomRoots.get(i));
-			System.err.println("Both species tree and gene tree "+i+" are rooted at "+root);
+			System.err.println("Both species tree and gene tree repeat "+i+" are rooted at "+root);
 			temps.get(i).rerootTreeAtNode(temps.get(i).getNode(root));
 			gTree.rerootTreeAtNode(gTree.getNode(root));
 			results.add(treeCompletion(gTree, temps.get(i)));
@@ -224,8 +223,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	        while (nodeStack.empty() == false) { 
 	              
 	            // Pop the top item from stack and print it 
-	            TNode mynode = nodeStack.peek(); 
-//	            System.err.print(((STINode<Double>) mynode).getData() + " "); 
+	            TNode mynode = nodeStack.peek();  
 	            if(((STINode) mynode).getData().equals("BM")){
 	            	
 	            	int childrenCount = mynode.getChildCount();
@@ -243,17 +241,15 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	    	        
 	    	        //if there is only one non-red child,it means that we definitely don't have this 
 	    	        //node in the other tree and we should create a new node
-	    	        if(redchild >= 1 && mynode.getChildCount()-redchild == 1){	
-	    	        	sTree = addToTreePolytomy(sTree, snode,  redChildren);
-	    	        }
-//	    	        else if(redchild ==1 && mynode.getChildCount() == 2){	            	
-//		    	        sTree = addToTree(sTree, snode, (STINode) redChildren.get(0));		    			
-//	            	}
-	            	else{
-	            		sTree = addToTreePolytomy2(sTree, snode,  redChildren);
+//	    	        if(redchild >= 1 && mynode.getChildCount()-redchild == 1){	
+//	    	        	sTree = addToTreePolytomy(sTree, snode,  redChildren);
+//	    	        }
+	    	        if(redchild ==1 && mynode.getChildCount() == 2){	            	
+		    	        sTree = addToTree(sTree, snode, (STINode) redChildren.get(0));		    			
 	            	}
-//	            	System.err.println(sTree.toNewick());
-	            	
+	            	else{
+	            		sTree = addToTreePolytomy(sTree, snode,  redChildren);
+	            	}	            	
 				}
 	            nodeStack.pop(); 
 	            
@@ -268,14 +264,12 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	}
 	
 	static HashMap<Integer,Integer> createLCAMap(Tree stTree, Tree gtTree) {
-//oneTreeCompletion
-//		for (Tree stTree : stTrees) {
+
 		HashMap<Integer, Integer> LCAMap = new HashMap<Integer,Integer>();
-//		System.err.println(stTree.getRoot().getID());
-			SchieberVishkinLCA lcaLookup = new SchieberVishkinLCA(stTree);
-//			for (Tree gtTree : gtTrees) {
-				Stack<TNode> stack = new Stack<TNode>();
-				for (TNode gtNode : gtTree.postTraverse()) {
+		SchieberVishkinLCA lcaLookup = new SchieberVishkinLCA(stTree);
+
+		Stack<TNode> stack = new Stack<TNode>();
+		for (TNode gtNode : gtTree.postTraverse()) {
 					if (gtNode.isLeaf()) {
 						if(((STINode) gtNode).getData().equals("G")){
 							TNode t = stTree.getNode(gtNode.getName());
@@ -336,17 +330,9 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 							}
 							
 						}
-						if(((STINode) gtNode).getData().equals("B")){
-							
-						}
-						
-						
-//						if (lca != leftLCA && lca != rightLCA) {
-//
-//						}
+
 					}
 				}
-//				System.err.println(LCAMap);
 				return LCAMap;
 			}
 	
