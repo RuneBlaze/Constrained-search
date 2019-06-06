@@ -26,8 +26,8 @@ public class TreeCompletion {
 	public static void main(String[] args) throws IOException, ParseException{
 		//String tr1 = "((1,(2,3)a)b,(4,(5,(6,7)d)c));";
 //		String tr1 = "((1,2)a,(3,(4,(6,(5,7))d)c));";
-		String tr1 = "((7,2)a,(3,(4,(6,(5,9))d)c),(0,11),99);";
-		String tr2 = "(3,(11,(5,9)a)b)c;";
+		String tr1 = "((7,2)a,(3,(4,(6,(5,9,18))d)c)f,(0,11,22,30)g,99)r;";
+		String tr2 = "((3,99),(11,(5,9)a)b)c;";
 //		String tr2 = "(9,7,3,4);";
 		NewickReader nr = new NewickReader(new StringReader(tr1));
 		STITree<Double> gt = new STITree<Double>(true);
@@ -46,7 +46,7 @@ public class TreeCompletion {
 //
 //			}
 //		}
-		System.err.println();
+
 		System.err.println(st.toNewick());
 		st = treeCompletion(gt,st);
 		System.err.println("out: "+st.toNewick());
@@ -82,7 +82,28 @@ public class TreeCompletion {
 		}
 		
 	}
+
 	
+static STITree addToTreePolytomy2(STITree tree , STINode adoptingNode, ArrayList<STINode> redChildren){
+		
+		ArrayList<STINode> newnodes = new ArrayList<STINode>();
+		try {
+			for(STINode n : redChildren)
+				newnodes.add(new STITree(((STINode<Double>)n).toNewick()).getRoot());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.err.println(adoptingNode.getName());
+
+			for(STINode n : newnodes)
+				adoptingNode.adoptChild(n);
+			return tree;
+	}
+
 static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<STINode> redChildren){
 		
 		ArrayList<STINode> newnodes = new ArrayList<STINode>();
@@ -106,21 +127,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 			return tree;
 		}
 		else{
-			
-//			System.err.println(tree.toNewick());
-//			System.err.println(tree.getRoot().getID());
-//			Tree tt = tree;
-//			for(TNode t : tt.postTraverse())
-//				System.err.println(t.getID()+" "+t.getName());
-//			tree.rerootTreeAtEdge(tree.getNode(2));
-//			System.err.println(tree.toNewick());
-//			tt = tree;
-//			for(TNode t : tt.postTraverse())
-//				System.err.println(t.getID()+" "+t.getName());
-//			System.out.println(tree.getRoot().getID());
-////			System.err.println(adoptingNode.getID());
-//			STINode newinternalnode = adoptingNode.getParent().createChild();
-//			
+				
 			STINode newinternalnode = adoptingNode.createChild();
 			TNode child = (TNode) adoptingNode.getChildren().iterator().next();
 			newinternalnode.adoptChild((TMutableNode) child );
@@ -128,12 +135,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 				newinternalnode.adoptChild(n);
 			return tree;
 			
-//			STITree s = new STITree();
-//			s.getRoot().setName("hey");
-//			for(STINode n : newnodes)
-//				s.getRoot().adoptChild(n);
-//			s.getRoot().adoptChild(tree.getRoot());
-//			return s;
+
 		}
 		
 	}
@@ -203,7 +205,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 
 		for(int i=0 ; i< REPEATS && i < common.size(); i++){
 			String root = common.get(randomRoots.get(i));
-			System.err.println("Both trees are rooted at "+root);
+			System.err.println("Both species tree and gene tree "+i+" are rooted at "+root);
 			temps.get(i).rerootTreeAtNode(temps.get(i).getNode(root));
 			gTree.rerootTreeAtNode(gTree.getNode(root));
 			results.add(treeCompletion(gTree, temps.get(i)));
@@ -213,44 +215,42 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 		
 	}
 	static STITree treeCompletion(STITree gTree, STITree sTree){
-//		String[] gtLeaves = gTree.getLeaves();
-//		String[] stLeaves = sTree.getLeaves();
-//		List<String> common = new ArrayList<String>(Arrays.asList(gtLeaves));
-//		common.retainAll(Arrays.asList(stLeaves));
-//		sTree.rerootTreeAtNode(sTree.getNode(common.get(0)));
-//		gTree.rerootTreeAtNode(gTree.getNode(common.get(0)));
 		nodeColoring(sTree, gTree);
 		HashMap<Integer, Integer> LCAMap = createLCAMap(sTree, gTree);
 	  
-	        // Create an empty stack and push root to it ,preorder on non-root nodes
+	        // Create an empty stack and push root to it 
 	        Stack<TNode> nodeStack = new Stack<TNode>(); 
 	        nodeStack.push(gTree.getRoot());
-//	        TNode root = gTree.getRoot();
-//	        for(TNode t: root.getChildren())
-//        		nodeStack.push(t);
 	        while (nodeStack.empty() == false) { 
 	              
 	            // Pop the top item from stack and print it 
 	            TNode mynode = nodeStack.peek(); 
 //	            System.err.print(((STINode<Double>) mynode).getData() + " "); 
 	            if(((STINode) mynode).getData().equals("BM")){
+	            	
 	            	int childrenCount = mynode.getChildCount();
 	            	int redchild = 0;
 	            	ArrayList<STINode> redChildren = new ArrayList<STINode>();
-	            	for(TNode child:mynode.getChildren())
+	            	for(TNode child:mynode.getChildren()){
+	            	
 	            		if(((STINode) child).getData().equals("R")){
 	            			redChildren.add((STINode) child);
+	            			
 	            			redchild += 1;
-	            	}
+	            	}}
 	            	int id = LCAMap.get(mynode.getID());
-//	            	System.err.println("id: "+id);
 	    	        STINode snode = sTree.getNode(id);
-	            	if(redchild ==1 && mynode.getChildCount() == 2){	            	
-		    	        sTree = addToTree(sTree, snode, (STINode) redChildren.get(0));
-		    			
-	            	}
+	    	        
+	    	        //if there is only one non-red child,it means that we definitely don't have this 
+	    	        //node in the other tree and we should create a new node
+	    	        if(redchild >= 1 && mynode.getChildCount()-redchild == 1){	
+	    	        	sTree = addToTreePolytomy(sTree, snode,  redChildren);
+	    	        }
+//	    	        else if(redchild ==1 && mynode.getChildCount() == 2){	            	
+//		    	        sTree = addToTree(sTree, snode, (STINode) redChildren.get(0));		    			
+//	            	}
 	            	else{
-	            		sTree = addToTreePolytomy(sTree, snode,  redChildren);
+	            		sTree = addToTreePolytomy2(sTree, snode,  redChildren);
 	            	}
 //	            	System.err.println(sTree.toNewick());
 	            	
