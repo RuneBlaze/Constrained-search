@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
+
 import phylonet.lca.SchieberVishkinLCA;
 import phylonet.tree.io.NewickReader;
 import phylonet.tree.io.ParseException;
@@ -21,13 +23,33 @@ import phylonet.tree.model.sti.STINode;
 import phylonet.tree.model.sti.STITree;
 import phylonet.tree.util.Trees;
 
+class NodeInfo{
+	private String color="";	
+	private int greenDescendents = 0;
+	public NodeInfo(String color, int greenDes){
+		this.color = color;
+		this.greenDescendents = greenDes;
+	}
+	public NodeInfo(int greenDes){
+		this.greenDescendents = greenDes;
+	}
+	
+	public String getColor() {
+		return color;
+	}
+	public int getGrDes() {
+		return greenDescendents;
+	}
+	
+}
 public class TreeCompletion {
 	
 	public static void main(String[] args) throws IOException, ParseException{
 		//String tr1 = "((1,(2,3)a)b,(4,(5,(6,7)d)c));";
 //		String tr1 = "((1,2)a,(3,(4,(6,(5,7))d)c));";
-		String tr1 = "((7,2)a,(3,(4,(6,(5,9,18))d)c)f,(0,11,22,30)g,99)r;";
-		String tr2 = "((3,99),(11,(5,9)a)b)c;";
+		String tr1 = "((7,2)a,(3,(4,(6,(5,9,18))d)c)f,(11,12,(22,1),30)g,99)r;";
+		String tr2 = "((3,99),((11,12),(5,9)a)b)c;";
+		//(18,(7,2),((3,99),4),((11,(5,9)a,0,22,30)b,6))c;
 //		String tr2 = "(9,7,3,4);";
 		NewickReader nr = new NewickReader(new StringReader(tr1));
 		STITree<Double> gt = new STITree<Double>(true);
@@ -36,6 +58,15 @@ public class TreeCompletion {
 		NewickReader nr2 = new NewickReader(new StringReader(tr2));
 		STITree<Double> st = new STITree<Double>(true);
 		nr2.readTree(st);
+		STINode newNode = new STITree(((STINode<Double>) gt.getNode("18")).toNewick()).getRoot();
+//		TNode nn =st.getRoot().createChild(gt.getNode("18"));
+//		((TMutableNode) nn).adoptChild(newNode);
+//		adoptChild(newNode);
+
+//		TNode n = st.getNode("18");
+//		if(n==null){
+//			System.err.println("heyy");
+//		}
 		
 //		for (TNode gtNode : gt.postTraverse()) {
 //			if(gtNode.getName().equals("c")){
@@ -68,7 +99,9 @@ public class TreeCompletion {
 		if(!adoptingNode.isRoot()){
 			STINode newinternalnode = adoptingNode.getParent().createChild();
 			newinternalnode.adoptChild(adoptingNode);
-			newinternalnode.adoptChild(newNode);
+			newinternalnode.createChild(newNode);
+//			if(null != tree.getNode(newNode.getName()))
+//				System.err.println("heyyy");
 			return tree;
 		}
 		else{
@@ -76,7 +109,7 @@ public class TreeCompletion {
 			STINode newinternalnode = adoptingNode.createChild();
 			TNode child = (TNode) adoptingNode.getChildren().iterator().next();
 			newinternalnode.adoptChild((TMutableNode) child );
-			newinternalnode.adoptChild(newNode);
+			newinternalnode.createChild(newNode);
 			return tree;
 			
 		}
@@ -88,8 +121,11 @@ static STITree addToTreePolytomy2(STITree tree , STINode adoptingNode, ArrayList
 		
 		ArrayList<STINode> newnodes = new ArrayList<STINode>();
 		try {
-			for(STINode n : redChildren)
+			for(STINode n : redChildren){
+				if(!n.isLeaf())
+					n.setName("");
 				newnodes.add(new STITree(((STINode<Double>)n).toNewick()).getRoot());
+		}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -97,19 +133,28 @@ static STITree addToTreePolytomy2(STITree tree , STINode adoptingNode, ArrayList
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.err.println(adoptingNode.getName());
-
-			for(STINode n : newnodes)
-				adoptingNode.adoptChild(n);
-			return tree;
+		if(adoptingNode.isLeaf()){			
+			for(STINode n : newnodes){
+				adoptingNode.getParent().createChild(n);
+			}
+		}
+		else{
+			for(STINode n : newnodes){
+				adoptingNode.createChild(n);
+			}			
+		}
+		return tree;
 	}
 
 static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<STINode> redChildren){
 		
 		ArrayList<STINode> newnodes = new ArrayList<STINode>();
 		try {
-			for(STINode n : redChildren)
-				newnodes.add(new STITree(((STINode<Double>)n).toNewick()).getRoot());
+			for(STINode n : redChildren){
+				if(!n.isLeaf())
+					n.setName("");
+					newnodes.add(new STITree(((STINode<Double>)n).toNewick()).getRoot());
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -122,8 +167,10 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 			
 			STINode newinternalnode = adoptingNode.getParent().createChild();
 			newinternalnode.adoptChild(adoptingNode);
-			for(STINode n : newnodes)
-				newinternalnode.adoptChild(n);
+			for(STINode n : newnodes){
+				newinternalnode.createChild(n);
+			}
+			
 			return tree;
 		}
 		else{
@@ -132,7 +179,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 			TNode child = (TNode) adoptingNode.getChildren().iterator().next();
 			newinternalnode.adoptChild((TMutableNode) child );
 			for(STINode n : newnodes)
-				newinternalnode.adoptChild(n);
+				newinternalnode.createChild(n);
 			return tree;
 			
 
@@ -140,26 +187,44 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 		
 	}
 	
-	static void nodeColoring(STITree stTree, Tree gtTree) {
+	static void nodeColoring(Tree stTree, Tree gtTree) {
+		
+		
+		for (TNode node : stTree.postTraverse()) {
+			if(node.isLeaf())
+				((STINode) node).setData(new NodeInfo(1));
+			else{
+				int greenCount = 0;
+				for (TNode child:node.getChildren())		
+					greenCount += ((NodeInfo) ((STINode) child).getData()).getGrDes();
+				((STINode) node).setData(new NodeInfo(greenCount));	
+		
+			}
+		}
+			
 		Set<String> stLeaves = new HashSet<String>(Arrays.asList(stTree.getLeaves())); 
 		
 		for (TNode gtNode : gtTree.postTraverse()) {
 			if(gtNode.isLeaf()){
 				String name = gtNode.getName();
 				if (stLeaves.contains(name)){
-					((STINode) gtNode).setData("G");
+					((STINode) gtNode).setData(new NodeInfo("G", 1));
 				}
 				else{
-					((STINode) gtNode).setData("R");
+					((STINode) gtNode).setData(new NodeInfo("R", 0));
 				}
 			}
 			else{
 				boolean allred = true;
 				boolean allgreen = true;
 				boolean hasred = false;
+				int greenCount = 0;
 				for (TNode child: gtNode.getChildren()){
 					
-					String data = (String) ((STINode) child).getData();
+					NodeInfo info = (NodeInfo) ((STINode) child).getData();
+					String data = info.getColor();
+					greenCount += info.getGrDes();
+//					String data = (String) ((STINode) child).getData();
 					if(data.equals("B") || data.equals("BM") ){
 						allred = false;
 						allgreen = false;
@@ -173,13 +238,13 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 					}
 				}
 					if(allred) 
-						((STINode) gtNode).setData("R");
+						((STINode) gtNode).setData(new NodeInfo("R", greenCount));
 					else if(allgreen)
-						((STINode) gtNode).setData("G");
+						((STINode) gtNode).setData(new NodeInfo("G", greenCount));
 					else if(hasred)
-						((STINode) gtNode).setData("BM");
+						((STINode) gtNode).setData(new NodeInfo("BM", greenCount));
 					else
-						((STINode) gtNode).setData("B");
+						((STINode) gtNode).setData(new NodeInfo("B", greenCount));
 			}
 		}
 		
@@ -224,32 +289,49 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	              
 	            // Pop the top item from stack and print it 
 	            TNode mynode = nodeStack.peek();  
-	            if(((STINode) mynode).getData().equals("BM")){
+	            NodeInfo info = (NodeInfo) ((STINode) mynode).getData();
+				String data = info.getColor();
+
+	            if(data.equals("BM")){
 	            	
 	            	int childrenCount = mynode.getChildCount();
 	            	int redchild = 0;
 	            	ArrayList<STINode> redChildren = new ArrayList<STINode>();
+	            	ArrayList<STINode> nonRed = new ArrayList<STINode>();
 	            	for(TNode child:mynode.getChildren()){
-	            	
-	            		if(((STINode) child).getData().equals("R")){
+						String childData = (String) ((NodeInfo) ((STINode) child).getData()).getColor();
+	            		if(childData.equals("R")){
 	            			redChildren.add((STINode) child);
 	            			
 	            			redchild += 1;
-	            	}}
+	            		}
+	            		else{
+	            			nonRed.add((STINode) child);
+	            		}
+	            	}
 	            	int id = LCAMap.get(mynode.getID());
 	    	        STINode snode = sTree.getNode(id);
 	    	        
+	    	        if(nonRed.size()==1 && ((NodeInfo) snode.getData()).getGrDes() == ((NodeInfo) nonRed.get(0).getData()).getGrDes()){
+	    	        		sTree = addToTreePolytomy(sTree, snode,  redChildren);
+	    	        }
+	    	        else{
+	    	        		sTree = addToTreePolytomy2(sTree, snode,  redChildren);
+	    	        }
+	    	        
 	    	        //if there is only one non-red child,it means that we definitely don't have this 
 	    	        //node in the other tree and we should create a new node
-//	    	        if(redchild >= 1 && mynode.getChildCount()-redchild == 1){	
-//	    	        	sTree = addToTreePolytomy(sTree, snode,  redChildren);
-//	    	        }
-	    	        if(redchild ==1 && mynode.getChildCount() == 2){	            	
-		    	        sTree = addToTree(sTree, snode, (STINode) redChildren.get(0));		    			
-	            	}
-	            	else{
-	            		sTree = addToTreePolytomy(sTree, snode,  redChildren);
-	            	}	            	
+////	    	        if(redchild >= 1 && mynode.getChildCount()-redchild == 1){	
+////	    	        	sTree = addToTreePolytomy(sTree, snode,  redChildren);
+////	    	        }
+//	    	        if(redchild ==1 && mynode.getChildCount() == 2){	            	
+//		    	        sTree = addToTree(sTree, snode, (STINode) redChildren.get(0));		    			
+//	            	}
+//	            	else{
+//	            		sTree = addToTreePolytomy(sTree, snode,  redChildren);
+//	            	}
+	    	        
+	    	        //----------------------------
 				}
 	            nodeStack.pop(); 
 	            
@@ -265,18 +347,22 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	
 	static HashMap<Integer,Integer> createLCAMap(Tree stTree, Tree gtTree) {
 
-		HashMap<Integer, Integer> LCAMap = new HashMap<Integer,Integer>();
+		HashMap<Integer, Integer> LCAMap = new HashMap<Integer, Integer>();
 		SchieberVishkinLCA lcaLookup = new SchieberVishkinLCA(stTree);
 
 		Stack<TNode> stack = new Stack<TNode>();
 		for (TNode gtNode : gtTree.postTraverse()) {
 					if (gtNode.isLeaf()) {
-						if(((STINode) gtNode).getData().equals("G")){
+
+						String color = (String) ((NodeInfo) ((STINode) gtNode).getData()).getColor();
+						
+						if(color.equals("G")){
 							TNode t = stTree.getNode(gtNode.getName());
 							stack.push(t);
+//							LCAMap.put(gtNode.getID(), new ArrayList<Integer>(Arrays.asList(t.getID(),0)));
 							LCAMap.put(gtNode.getID(), t.getID());
 						}
-						if(((STINode) gtNode).getData().equals("R")){
+						if(color.equals("R")){
 							stack.push(null);
 						}
 					} else {
