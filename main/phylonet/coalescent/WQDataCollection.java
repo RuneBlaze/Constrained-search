@@ -931,10 +931,6 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 		System.err
 				.println("Adding to X using resolutions of greedy consensus ...");
 		for (Tree tree : contractedTrees) {
-			System.err.println(tid.getTaxonName(0));
-			for(TNode t:tree.postTraverse())
-				System.err.print(t.getName()+"* ");
-			TNode n = tree.getNode("151");
 			tree.rerootTreeAtEdge(tid.getTaxonName(0));
 			Trees.removeBinaryNodes((MutableTree) tree);
 		}

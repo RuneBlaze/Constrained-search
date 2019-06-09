@@ -618,7 +618,7 @@ public class CommandLine{
 	        	List<Tree> res = new ArrayList<Tree>();
 
 	        	for(Tree tr:mainTrees){
-	        		res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)extraTrees.get(0),5));
+	        		res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)extraTrees.get(0),1));
 	        	}
 	  //      	ArrayList<STITree> res = tc.treeCompletionRepeat((STITree)mainTrees.get(0), (STITree)extraTrees.get(0));
 	        	for(Tree tr: res)
