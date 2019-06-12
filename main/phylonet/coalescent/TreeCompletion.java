@@ -47,10 +47,17 @@ public class TreeCompletion {
 	public static void main(String[] args) throws IOException, ParseException{
 		//String tr1 = "((1,(2,3)a)b,(4,(5,(6,7)d)c));";
 //		String tr1 = "((1,2)a,(3,(4,(6,(5,7))d)c));";
-		String tr1 = "((7,2)a,(3,(4,(6,(5,9,18))d)c)f,(11,12,(22,1),30)g,99)r;";
-		String tr2 = "((3,99),((11,12),(5,9)a)b)c;";
+		//((3,99),((11,12,(22,1),30),(4,((5,9,18)a,6)))b,(7,2))c;
+
+//		String tr1 = "((7,2)a,(3,(4,(6,(5,(9,(18,23,90))))d)c)f,(11,12,(22,1),30)g,99)r;";
+//		String tr2 = "((3,99),((11,22,1),(5,9,18)a)b)c;";
+		
+//		String tr2 = "(193,(15,(62,(((99,43),(26,(106,(137,78)))),(((66,(3,(102,(151,165)))),(16,((186,((76,(124,(51,79))),(98,(123,((107,195),(131,(168,104))))))),(((95,121),(9,136)),((6,(67,41)),(81,((45,130),(198,(12,47))))))))),((((153,53),(159,44)),((183,42),((196,22),((19,(40,(14,110))),(156,((173,111),(13,185))))))),((83,((74,148),(146,(109,118)))),(((8,(50,10)),((24,88),((92,38),(132,(75,154))))),((31,((134,(157,82)),((49,72),((188,149),(119,(184,143)))))),(128,(((69,(((29,158),(71,96)),((179,28),((100,87),((126,122),(59,(120,23))))))),((181,((77,30),(152,(70,(85,46))))),((150,(187,(37,61))),((89,182),(161,(135,7)))))),(0,((((113,36),(63,34)),((172,178),((39,65),(68,(166,(60,86)))))),(((145,48),((127,(169,(171,(199,176)))),((32,(18,191)),(180,((142,(105,(117,175))),(((17,93),((162,52),(108,54))),((20,94),((138,(192,160)),(197,(200,141)))))))))),((((58,(114,167)),(57,(139,25))),(2,(((33,1),(190,21)),(5,((80,163),(55,(101,(189,84)))))))),(((73,112),(56,(4,140))),(91,((147,11),(((97,133),((177,27),(144,129))),((64,(125,((90,170),(174,(164,103))))),(35,((115,194),(155,116)))))))))))))))))))))));";
+//		String tr1 = "(193,(15,(62,(((99,43),(26,(106,(137,78)))),(((66,(3,(102,(151,165)))),(16,((186,((76,(124,(51,79))),(98,(123,((107,195),(131,(168,104))))))),(((95,121),(9,136)),((6,(67,41)),(81,((45,130),(198,(12,47))))))))),((((153,53),(159,44)),((183,42),((196,22),((19,(40,(14,110))),(156,((173,111),(13,185))))))),((83,((74,148),(146,(109,118)))),(((8,(50,10)),((24,88),((92,38),(132,(75,154))))),((31,((134,(157,82)),((49,72),((188,149),(119,(184,143)))))),(128,(((69,(((29,158),(71,96)),((179,28),((100,87),((126,122),(59,(120,23))))))),((181,((77,30),(152,(70,(85,46))))),((150,(187,(37,61))),((89,182),(161,(135,7)))))),(0,((((113,36),(63,34)),((172,178),((39,65),(68,(166,(60,86)))))),(((145,48),((127,(169,(171,(199,176)))),((32,(18,191)),(180,((142,(105,(117,175))),(((17,93),((162,52),(108,54))),((20,94),((138,(192,160)),(197,(200,141)))))))))),((((58,(114,167)),(57,(139,25))),(2,(((33,1),(190,21)),(5,((80,163),(55,(101,(189,84)))))))),(((73,112),(56,(4,140))),(91,((147,11),(((97,133),((177,27),(144,129))),((64,(125,((90,170),(174,(164,103))))),(35,((115,194),(155,116)))))))))))))))))))))));";
 		//(18,(7,2),((3,99),4),((11,(5,9)a,0,22,30)b,6))c;
 //		String tr2 = "(9,7,3,4);";
+		String tr1 = args[0];
+		String tr2 = args[1]; //backbone
 		NewickReader nr = new NewickReader(new StringReader(tr1));
 		STITree<Double> gt = new STITree<Double>(true);
 		nr.readTree(gt);
@@ -281,6 +288,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	static STITree treeCompletion(STITree gTree, STITree sTree){
 		nodeColoring(sTree, gTree);
 		HashMap<Integer, Integer> LCAMap = createLCAMap(sTree, gTree);
+		LCAMap = resolvePolytomies(sTree, gTree, LCAMap);
 	  
 	        // Create an empty stack and push root to it 
 	        Stack<TNode> nodeStack = new Stack<TNode>(); 
@@ -343,6 +351,49 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 
 	    }  
 	        return sTree;
+	}
+	
+	
+	static HashMap<Integer,Integer> resolvePolytomies(Tree stTree, Tree gtTree, HashMap<Integer,Integer> LCAMap){
+		for (TNode node : gtTree.postTraverse()) {
+			if (node.isLeaf()) {
+			}
+			else{
+            	ArrayList<STINode> nonRed = new ArrayList<STINode>();
+            	for(TNode child: node.getChildren()){
+					String childData = (String) ((NodeInfo) ((STINode) child).getData()).getColor();
+            		if(!childData.equals("R"))     			
+            			nonRed.add((STINode) child);
+            		
+            	}
+            	if(nonRed.size() >= 2){
+            		STINode snode = (STINode) stTree.getNode(LCAMap.get(node.getID()));
+            		//need to add resolution
+            		if(snode.getChildCount() > nonRed.size()){
+            			boolean sameLCAs = true;
+            			ArrayList<STINode> LCAchildren = new ArrayList<STINode>();
+            			for(TNode child: nonRed){
+            				STINode snodechild = (STINode) stTree.getNode(LCAMap.get(child.getID()));
+            				if(!snodechild.getParent().equals(snode)){
+            					sameLCAs = false;
+            				}
+            				else{
+            					LCAchildren.add(snodechild);
+            				}
+            			}
+            			if(sameLCAs){
+            				STINode newinternalnode = snode.createChild();
+            				for(TNode child: LCAchildren){
+            					newinternalnode.adoptChild((TMutableNode) child);
+            				}
+            				LCAMap.put(node.getID(), newinternalnode.getID());
+            			}
+            			
+            		}
+            	}
+			}
+		}
+		return LCAMap;
 	}
 	
 	static HashMap<Integer,Integer> createLCAMap(Tree stTree, Tree gtTree) {
