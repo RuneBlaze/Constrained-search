@@ -40,7 +40,7 @@ import com.martiansoftware.jsap.Switch;
 import com.martiansoftware.jsap.stringparsers.FileStringParser;
 
 public class CommandLine{
-    protected static String _versinon = "5.6.7";
+    protected static String _versinon = "5.6.8";
 
     protected static SimpleJSAP jsap;
     
@@ -58,7 +58,7 @@ public class CommandLine{
     private static SimpleJSAP getJSAP() throws JSAPException {
         return new SimpleJSAP(
                 "ASTRAL (version" + _versinon + ")",
-                "species tree inference from unrooted gene trees. "
+                "species tree inference from unrooted gene trees . "
                 + "The ASTRAL algorithm maximizes the number of shared quartet trees with"
                 + " the collection of all gene trees. The result of this optimization problem"
                 + " is statistically consistent under the multi-species coalescent model."
@@ -475,6 +475,7 @@ public class CommandLine{
         
         System.err.println("\n================== ASTRAL ===================== \n" );
         System.err.println("This is ASTRAL version " + _versinon);
+        System.err.println("Species tree is inferred from completed trees");
         
         jsap = getJSAP();     
         config = jsap.parse(args);  
@@ -624,7 +625,7 @@ public class CommandLine{
 	        	for(Tree tr: res)
 	        		System.out.println(tr.toNewick());
 //	        	mainTrees = res;
-//	        	mainTrees = new ArrayList<Tree>(res);
+	        	mainTrees = new ArrayList<Tree>(res);
 	        	completedTrees = new ArrayList<Tree>(res);
 	        	System.err.println("All gene trees are converted to be compatible with species tree.");
 	        	

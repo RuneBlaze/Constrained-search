@@ -65,7 +65,15 @@ public class TreeCompletion {
 		NewickReader nr2 = new NewickReader(new StringReader(tr2));
 		STITree<Double> st = new STITree<Double>(true);
 		nr2.readTree(st);
-		STINode newNode = new STITree(((STINode<Double>) gt.getNode("18")).toNewick()).getRoot();
+		
+		String[] gtLeaves = gt.getLeaves();
+		String[] stLeaves = st.getLeaves();
+		List<String> common = new ArrayList<String>(Arrays.asList(gtLeaves));
+		common.retainAll(Arrays.asList(stLeaves));
+		gt.rerootTreeAtNode(gt.getNode(common.get(0)));
+		st.rerootTreeAtNode(st.getNode(common.get(0)));
+		
+//		STINode newNode = new STITree(((STINode<Double>) gt.getNode("18")).toNewick()).getRoot();
 //		TNode nn =st.getRoot().createChild(gt.getNode("18"));
 //		((TMutableNode) nn).adoptChild(newNode);
 //		adoptChild(newNode);
