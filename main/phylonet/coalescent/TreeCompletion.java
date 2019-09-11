@@ -66,24 +66,6 @@ public class TreeCompletion {
 		STITree<Double> st = new STITree<Double>(true);
 		nr2.readTree(st);
 		STINode newNode = new STITree(((STINode<Double>) gt.getNode("18")).toNewick()).getRoot();
-//		TNode nn =st.getRoot().createChild(gt.getNode("18"));
-//		((TMutableNode) nn).adoptChild(newNode);
-//		adoptChild(newNode);
-
-//		TNode n = st.getNode("18");
-//		if(n==null){
-//			System.err.println("heyy");
-//		}
-		
-//		for (TNode gtNode : gt.postTraverse()) {
-//			if(gtNode.getName().equals("c")){
-//				System.err.println(gtNode.getID()+"**");
-//				System.err.println(((STINode<Double>) gtNode).toNewick());
-//			TMutableNode newNode = new NewickReader(new StringReader(((STINode<Double>) gtNode).toNewick())).readTree().getRoot();
-//			st = addToTree(st,(STINode) st.getNode(0),(STINode)gtNode);
-//
-//			}
-//		}
 
 		System.err.println(st.toNewick());
 		st = treeCompletion(gt,st);
@@ -276,7 +258,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 
 		for(int i=0 ; i< REPEATS && i < common.size(); i++){
 			String root = common.get(randomRoots.get(i));
-			System.err.println("Both species tree and gene tree repeat "+i+" are rooted at "+root);
+			System.err.println("Both constraint tree and gene tree repeat "+i+" are rooted at "+root);
 			temps.get(i).rerootTreeAtNode(temps.get(i).getNode(root));
 			gTree.rerootTreeAtNode(gTree.getNode(root));
 			results.add(treeCompletion(gTree, temps.get(i)));

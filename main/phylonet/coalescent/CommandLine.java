@@ -170,11 +170,11 @@ public class CommandLine{
                             + " of new  resolutions are added. ASTRAL-III sets automatic limits to guarantee polynomial"
                             + " time running time."),
 	                                
-	                new Switch( "duplication",
-	                        JSAP.NO_SHORTFLAG, "dup",
-	                        "Solves MGD problem. Minimizes the number duplications required to explain "
-	                        + "gene trees using DynaDup algorithm (Bayzid, 2011). Note that with this option, "
-	                        + "DynaDyp would be used *instead of* ASTRAL."),
+//	                new Switch( "duplication",
+//	                        JSAP.NO_SHORTFLAG, "dup",
+//	                        "Solves MGD problem. Minimizes the number duplications required to explain "
+//	                        + "gene trees using DynaDup algorithm (Bayzid, 2011). Note that with this option, "
+//	                        + "DynaDyp would be used *instead of* ASTRAL."),
 	                                            
                     new Switch("exact",
                             'x', "exact",
@@ -221,6 +221,17 @@ public class CommandLine{
                             + "Use -l 0 for standard (homomorphic) definition, and -l 1 for our new bd definition. "
                             + "Any value in between weights the impact of missing taxa somewhere between these two extremes. "
                             + "-l auto will automatically pick this weight. "), 
+                    
+//	                new Switch("constrained",
+//	                        JSAP.NO_SHORTFLAG, "constrained",
+//	                        "perform constrained search with given constraint tree. Should be used with the -e option."),    
+//	                
+	                new FlaggedOption("constraint tree", 
+                            FileStringParser.getParser().setMustExist(true), null, JSAP.NOT_REQUIRED, 
+                            'j', "constrain",
+                            "provide constraint tree to be enforced on the search space and hence the final tree"),
+
+
                 });
     }
 
@@ -550,7 +561,7 @@ public class CommandLine{
 		System.err.println("Scoring: " + toScore.size() +" trees");
 		
 		AbstractInference inference =
-		        initializeInference(criterion, mainTrees, new ArrayList<Tree>(), new ArrayList<Tree>(), options, null);           
+		        initializeInference(criterion, mainTrees, new ArrayList<Tree>(), new ArrayList<Tree>(), options, null, null);           
 		double score = Double.NEGATIVE_INFINITY;
 		List<Tree> bestTree = new ArrayList<Tree>(); 
 		for (String trs : toScore) {   
@@ -599,18 +610,28 @@ public class CommandLine{
 		System.err.println("All output trees will be *arbitrarily* rooted at "+outgroup);
 		
 		List<Tree> extraTrees = new ArrayList<Tree>();
+		List<Tree> constraintTree = new ArrayList<Tree>();
 		List<Tree> completedTrees = new ArrayList<Tree>();
 		List<Tree> toRemoveExtraTrees = new ArrayList<Tree>();
 		
+		if (config.getFile("constraint tree") != null &&constraintTree.size()!=0) {
+			if (config.getFile("mapping") != null) {
+				System.err.println("Constrained version can not be used with Multi-individual version of ASTRAL for now.");
+				System.exit(0);
+			}
+			// TODO: -q: warn that -j is ignored but proceed. 
+			// TODO: error on -x
+			
+		}
 		try {
 
-		    if (config.getFile("extra trees") != null) {
+		    if (config.getFile("constraint tree") != null) {
 		    
-		    	readInputTrees(extraTrees, 
-		        	readTreeFileAsString(config.getFile("extra trees")), 
-		                extrarooted, true, false, null, 1, null);
-		        System.err.println(extraTrees.size() + " extra trees read from "
-		                + config.getFile("extra trees"));
+		    	readInputTrees(constraintTree, 
+		        	readTreeFileAsString(config.getFile("constraint tree")), 
+		                false, false, false, null, 1, null);///rooting
+		        System.err.println(constraintTree.size() + " constraint tree read from "
+		                + config.getFile("constraint tree"));
 		        
 		        //****************************************************************************
 	        	TreeCompletion tc = new TreeCompletion();
@@ -618,16 +639,23 @@ public class CommandLine{
 	        	List<Tree> res = new ArrayList<Tree>();
 
 	        	for(Tree tr:mainTrees){
-	        		res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)extraTrees.get(0),1));
+	        		res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)constraintTree.get(0),1));
 	        	}
-	  //      	ArrayList<STITree> res = tc.treeCompletionRepeat((STITree)mainTrees.get(0), (STITree)extraTrees.get(0));
 	        	for(Tree tr: res)
 	        		System.out.println(tr.toNewick());
-//	        	mainTrees = res;
-//	        	mainTrees = new ArrayList<Tree>(res);
+
 	        	completedTrees = new ArrayList<Tree>(res);
 	        	System.err.println("All gene trees are converted to be compatible with species tree.");
 	        	
+		    }
+		    
+		    if (config.getFile("extra trees") != null) {
+			    
+		    	readInputTrees(extraTrees, 
+		        	readTreeFileAsString(config.getFile("extra trees")), 
+		                extrarooted, true, false, null, 1, null);
+		        System.err.println(extraTrees.size() + " extra trees read from "
+		                + config.getFile("extra trees"));
 		    }
 		    
 		    if (config.getFile("extra species trees") != null) {
@@ -662,7 +690,7 @@ public class CommandLine{
 		    readInputTrees(trees, input, rooted, false, false, options.getMinLeaves(),
             		config.getInt("branch annotation level"), null);
 		    bootstraps.add(runOnOneInput(criterion, 
-		             extraTrees,toRemoveExtraTrees, outbuffer, trees, null, outgroup, options,null));
+		             extraTrees,toRemoveExtraTrees, outbuffer, trees, null, outgroup, options,null,null));
 		}
 		
 		if (bootstraps != null && bootstraps.size() != 0) {
@@ -675,14 +703,14 @@ public class CommandLine{
 
 		System.err.println("\n======== Running the main analysis");
 		runOnOneInput(criterion, extraTrees, toRemoveExtraTrees,outbuffer, mainTrees, bootstraps, 
-		        outgroup, options, completedTrees);
+		        outgroup, options, completedTrees, constraintTree);
 		   
 		outbuffer.close();
 	}
 
     private static Tree runOnOneInput(int criterion, List<Tree> extraTrees,
     		List<Tree> toRemoveExtraTrees, BufferedWriter outbuffer, List<Tree> input, 
-            Iterable<Tree> bootstraps, String outgroup, Options options, List<Tree> completedTrees) {
+            Iterable<Tree> bootstraps, String outgroup, Options options, List<Tree> completedTrees, List<Tree> constraintTree) {
         long startTime;
         startTime = System.currentTimeMillis();
 //        int removedTrees = 0;
@@ -700,7 +728,7 @@ public class CommandLine{
 //        System.err.println("removed trees"+ removedTrees);
         
         AbstractInference inference =
-                initializeInference(criterion, input, extraTrees,toRemoveExtraTrees, options, completedTrees);
+                initializeInference(criterion, input, extraTrees,toRemoveExtraTrees, options, completedTrees, constraintTree);
         
         inference.setup(); 
         
@@ -750,13 +778,13 @@ public class CommandLine{
 
     private static AbstractInference initializeInference(int criterion, 
             List<Tree> trees, List<Tree> extraTrees,
-            List<Tree> toRemoveExtraTrees, Options options, List<Tree> completedTrees) {
+            List<Tree> toRemoveExtraTrees, Options options, List<Tree> completedTrees, List<Tree> constraintTree) {
         AbstractInference inference;		
 		if (criterion == 1 || criterion == 0) {
 			inference = new DLInference(options, 
-					trees, extraTrees, toRemoveExtraTrees, completedTrees);			
+					trees, extraTrees, toRemoveExtraTrees, completedTrees,constraintTree);			
 		} else if (criterion == 2) {
-			inference = new WQInference(options, trees, extraTrees, toRemoveExtraTrees,completedTrees);
+			inference = new WQInference(options, trees, extraTrees, toRemoveExtraTrees,completedTrees, constraintTree);
 		} else {
 			throw new RuntimeException("criterion not set?");
 		}		

@@ -31,7 +31,8 @@ public class Options {
 			boolean exactSolution, boolean duploss, int alg, int addExtra,
 			boolean outputCompletedGenes, boolean outSearch, boolean run,
 			int branchannotation, double lambda, String outputFile, int samplingrounds, int polylimit,
-			double trim, String freqOutputPath, Integer minimumLeaves, Integer geneRepeat, boolean removeExtraTree) {
+			double trim, String freqOutputPath, Integer minimumLeaves, Integer geneRepeat,
+			boolean removeExtraTree) {
 		this.rooted = rooted;
 		this.extrarooted = extrarooted;
 		this.exactSolution = exactSolution;

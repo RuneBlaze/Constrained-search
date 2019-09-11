@@ -25,6 +25,7 @@ import phylonet.tree.model.Tree;
 import phylonet.tree.model.sti.STINode;
 import phylonet.tree.model.sti.STITree;
 import phylonet.tree.model.sti.STITreeCluster;
+import phylonet.tree.model.sti.STITreeCluster.Vertex;
 import phylonet.tree.util.Trees;
 import phylonet.util.BitSet;
 
@@ -212,7 +213,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 							
 						}
 						gradient = this.clusters.getClusterCount() - b;
-						System.err.println("round "+ii+" gradient:"+gradient);
+//						System.err.println("round "+ii+" gradient:"+gradient);
 					}
 
 				}
@@ -376,13 +377,41 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 
 		return added;
 	}
+	
+	/**
+	 * Adds extra bipartitions added by user using the option -e and -f
+	 */
+	public void addExtraBipartitionsByInput(List<Tree> extraTrees,
+			boolean extraTreeRooted) {
+
+		//List<Tree> completedExtraGeeneTrees = new ArrayList<Tree>();
+		for (Tree tr : extraTrees) {
+			String[] gtLeaves = tr.getLeaves();
+			STITreeCluster gtAll = GlobalMaps.taxonIdentifier.newCluster();
+			for (int i = 0; i < gtLeaves.length; i++) {
+				gtAll.addLeaf(GlobalMaps.taxonIdentifier.taxonId(gtLeaves[i]));
+			}
+			Tree trc = getCompleteTree(tr, gtAll.getBitSet());
+			
+			STITree stTrc = new STITree(trc);
+			GlobalMaps.taxonNameMap.getSpeciesIdMapper().gtToSt((MutableTree) stTrc);
+			if(hasPolytomy(stTrc)){
+				throw new RuntimeException("Extra tree shouldn't have polytomy ");
+			}
+			ArrayList<Tree> st = new ArrayList<Tree>();
+			st.add(stTrc);
+			addBipartitionsFromSignleIndTreesToX(stTrc,st, GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier());
+		}
+		
+
+	}
 
 	/**
 	 * Adds extra bipartitions added by user using the option -e and -f
 	 * @param inference 
 	 */
 	public void addExtraBipartitionsByInput(List<Tree> completedTrees,
-			boolean extraTreeRooted, AbstractInference inference, Tree backbone) {
+		 AbstractInference inference, Tree backbone) {
 		
 		ArrayList<Tree> baseTrees = new ArrayList<Tree>();
 		List<STITreeCluster> upgma = new ArrayList<STITreeCluster>();
@@ -394,9 +423,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 		Tree UPGMA = Utils.buildTreeFromClusters(upgma, GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier(), false);
 		System.err.println("UPGMA: "+UPGMA.toNewick());
 		baseTrees.add(UPGMA);
-		
 
-		//List<Tree> completedExtraGeeneTrees = new ArrayList<Tree>();
 		for (Tree tr : completedTrees) {
 			String[] gtLeaves = tr.getLeaves();
 			STITreeCluster gtAll = GlobalMaps.taxonIdentifier.newCluster();
@@ -407,11 +434,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 			
 			STITree stTrc = new STITree(trc);
 			GlobalMaps.taxonNameMap.getSpeciesIdMapper().gtToSt((MutableTree) stTrc);
-//			if(hasPolytomy(stTrc)){
-//				throw new RuntimeException("Extra tree shouldn't have polytomy ");
-//			}
-//			ArrayList<Tree> st = new ArrayList<Tree>();
-//			st.add(stTrc);
+
 			addBipartitionsFromSignleIndTreesToX(stTrc,baseTrees, GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier());
 		}
 		
@@ -427,7 +450,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 					.println("calculating extra bipartitions to be added at level "
 							+ inference.getAddExtra() + " ...");
 			
-			this.addExtraBipartitionByHeuristics(completedTrees,
+			this.addExtraBipartitionByHeuristicsConstrained(completedTrees,
 					GlobalMaps.taxonNameMap.getSpeciesIdMapper()
 							.getSTTaxonIdentifier(),
 					this.speciesSimilarityMatrix,inference.options.getPolylimit(),backbone);
@@ -440,9 +463,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 			 System.err.println("gradient"+l+" in heuristiic: "+ gradiant);
 			 prev = clusters.getClusterCount();
 
-		}
-
-		
+		}		
 
 	}
 	
@@ -454,9 +475,14 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 		for(int i = 0; i < stClusters.size(); i++){
 			STITreeCluster cluster = stClusters.get(i);
 			size =  cluster.getClusterSize();
+			System.err.println(size);
+			System.err.println(cluster);
+			System.err.println(clusters.contains(cluster.new Vertex()));
 			removeCluster(cluster, size);
+			System.err.println(clusters.getClusterCount());
 //			System.err.println(size+ cluster.toString());
-			STITreeCluster comp = cluster.complementaryCluster();			
+			STITreeCluster comp = cluster.complementaryCluster();	
+			System.err.println(comp);
 			if(comp.getClusterSize() < GlobalMaps.taxonIdentifier.taxonCount() - 1){
 				removeCluster(comp, size);
 			}
@@ -537,187 +563,182 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 				this.completedGeeneTrees.add(new STITree(t));
 			}
 		}
-//
-//		System.err.println("Building set of clusters (X) from gene trees ");
-//
-////		List<STITreeCluster> upgma = new ArrayList<STITreeCluster>();
-////		for(BitSet b : this.speciesSimilarityMatrix.UPGMA()){
-////			STITreeCluster sti = new STITreeCluster(GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier());
-////			sti.setCluster(b);
-////			upgma.add(sti);
-////		}
-////		Tree t = Utils.buildTreeFromClusters(upgma, GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier(), false);
-////		System.out.println(t.toNewick());
-////		java.lang.System.exit(0);
-//		/**
-//		 * This is where we randomly sample one individual per species before
-//		 * performing the next steps in construction of the set X.
-//		 */
-//		int firstRoundSampling = 400;
-//		//double sampling = GlobalMaps.taxonNameMap.getSpeciesIdMapper().meanSampling();
-//		//int secondRoundSampling = (int) Math.ceil(Math.log(2*sampling)/Math.log(2));
-//		
-//		
-//		int secondRoundSampling = getSamplingRepeationFactor(inference.options.getSamplingrounds());;
-//
-//
-//		ArrayList<SingleIndividualSample> firstRoundSamples = new ArrayList<SingleIndividualSample>();
-//		int K =100;
+
 		STITreeCluster all = GlobalMaps.taxonIdentifier.newCluster();
 		all.getBitSet().set(0, GlobalMaps.taxonIdentifier.taxonCount());
 		addToClusters(all, GlobalMaps.taxonIdentifier.taxonCount());
-//
+
+		if(inf.constraintTree != null && inf.constraintTree.size()> 0)
+			return;
+		
+	
+		System.err.println("Building set of clusters (X) from gene trees ");
+
+		/**
+		 * This is where we randomly sample one individual per species before
+		 * performing the next steps in construction of the set X.
+		 */
+		int firstRoundSampling = 400;
+		//double sampling = GlobalMaps.taxonNameMap.getSpeciesIdMapper().meanSampling();
+		//int secondRoundSampling = (int) Math.ceil(Math.log(2*sampling)/Math.log(2));
+		
+		
+		int secondRoundSampling = getSamplingRepeationFactor(inference.options.getSamplingrounds());;
+
+
+		ArrayList<SingleIndividualSample> firstRoundSamples = new ArrayList<SingleIndividualSample>();
+		int K =100;
+		
+		int arraySize = this.completedGeeneTrees.size();
+		List<Tree> [] allGreedies = new List [arraySize];
+		
+		int prev = 0, gradiant = 0;
+		
+		
+		
+		if (GlobalMaps.taxonNameMap.getSpeciesIdMapper().isSingleIndividual()) {
+			int gtindex = 0;
+			for (Tree gt : this.completedGeeneTrees) {
+				ArrayList<Tree> tmp = new ArrayList<Tree>();
+				STITree gtrelabelled = new STITree( gt);
+				GlobalMaps.taxonNameMap.getSpeciesIdMapper().gtToSt((MutableTree) gtrelabelled);
+				tmp.add(gtrelabelled);
+				allGreedies[gtindex++] = tmp;
+			}
+		} else {
+			//System.err.println("In the first round of  sampling "
+				//	+ firstRoundSampling + " samples will be taken");
+			
+			/*
+			 * instantiate k random samples
+			 */
+			
+			for (int r = 0; r < secondRoundSampling*K; r++) {
+
+				//System.err.println("------------\n" + "sample " + (r+1)
+					//	+ " of individual  sampling ...");
+				SingleIndividualSample taxonSample = new SingleIndividualSample(
+						spm, this.similarityMatrix);
+				firstRoundSamples.add(taxonSample);
+
+			}
+			
+			System.err.println("In second round sampling "+secondRoundSampling+" rounds will be done");
+		
+			int gtindex = 0;
+			for (Tree gt : this.completedGeeneTrees) {
+			//	System.err.println("gene tree number " + i + " is processing..");
+				ArrayList<Tree> firstRoundSampleTrees = new ArrayList<Tree>();
+	
+				for (SingleIndividualSample sample : firstRoundSamples) {
+	
+					Tree contractedTree = sample.contractTree(gt);
+					contractedTree.rerootTreeAtEdge(GlobalMaps.taxonNameMap.getSpeciesIdMapper()
+					.getSTTaxonIdentifier().getTaxonName(0));
+					Trees.removeBinaryNodes((MutableTree)contractedTree);
+					// returns a tree with species label
+					firstRoundSampleTrees.add(contractedTree);
+				}
+	
+				ArrayList<Tree> greedies = new ArrayList<Tree>();
+				for (int r = 0; r < secondRoundSampling; r++) {
+					List<Tree> sample;
+					
+					//Collections.shuffle(firstRoundSampleTrees, GlobalMaps.random);
+					sample = firstRoundSampleTrees.subList(r*K, K*r+99);
+					greedies.add(Utils.greedyConsensus(sample, false,
+							GlobalMaps.taxonNameMap.getSpeciesIdMapper()
+									.getSTTaxonIdentifier(), true));
+				}
+
+				
+				allGreedies[gtindex++]=greedies;
+				// System.err.println("Number of clusters after simple addition from gene trees: "
+				// + clusters.getClusterCount());
+	
+			}
+		}
+		
+		/**
+		 * generate a list of sampled gene trees selecting each one randomly
+		 */
+//		ArrayList<Tree> greedyCandidates = new ArrayList<Tree>();
 //		
-//		int arraySize = this.completedGeeneTrees.size();
-//		List<Tree> [] allGreedies = new List [arraySize];
-//		
-//		int prev = 0, gradiant = 0;
-//		
-//		
-//		
-//		if (GlobalMaps.taxonNameMap.getSpeciesIdMapper().isSingleIndividual()) {
-//			int gtindex = 0;
-//			for (Tree gt : this.completedGeeneTrees) {
-//				ArrayList<Tree> tmp = new ArrayList<Tree>();
-//				STITree gtrelabelled = new STITree( gt);
-//				GlobalMaps.taxonNameMap.getSpeciesIdMapper().gtToSt((MutableTree) gtrelabelled);
-//				tmp.add(gtrelabelled);
-//				allGreedies[gtindex++] = tmp;
-//			}
-//		} else {
-//			//System.err.println("In the first round of  sampling "
-//				//	+ firstRoundSampling + " samples will be taken");
-//			
-//			/*
-//			 * instantiate k random samples
-//			 */
-//			
-//			for (int r = 0; r < secondRoundSampling*K; r++) {
-//
-//				//System.err.println("------------\n" + "sample " + (r+1)
-//					//	+ " of individual  sampling ...");
-//				SingleIndividualSample taxonSample = new SingleIndividualSample(
-//						spm, this.similarityMatrix);
-//				firstRoundSamples.add(taxonSample);
-//
-//			}
-//			
-//			System.err.println("In second round sampling "+secondRoundSampling+" rounds will be done");
-//		
-//			int gtindex = 0;
-//			for (Tree gt : this.completedGeeneTrees) {
-//			//	System.err.println("gene tree number " + i + " is processing..");
-//				ArrayList<Tree> firstRoundSampleTrees = new ArrayList<Tree>();
-//	
-//				for (SingleIndividualSample sample : firstRoundSamples) {
-//	
-//					Tree contractedTree = sample.contractTree(gt);
-//					contractedTree.rerootTreeAtEdge(GlobalMaps.taxonNameMap.getSpeciesIdMapper()
-//					.getSTTaxonIdentifier().getTaxonName(0));
-//					Trees.removeBinaryNodes((MutableTree)contractedTree);
-//					// returns a tree with species label
-//					firstRoundSampleTrees.add(contractedTree);
-//				}
-//	
-//				ArrayList<Tree> greedies = new ArrayList<Tree>();
-//				for (int r = 0; r < secondRoundSampling; r++) {
-//					List<Tree> sample;
-//					
-//					//Collections.shuffle(firstRoundSampleTrees, GlobalMaps.random);
-//					sample = firstRoundSampleTrees.subList(r*K, K*r+99);
-//					greedies.add(Utils.greedyConsensus(sample, false,
-//							GlobalMaps.taxonNameMap.getSpeciesIdMapper()
-//									.getSTTaxonIdentifier(), true));
-//				}
-//
-//				
-//				allGreedies[gtindex++]=greedies;
-//				// System.err.println("Number of clusters after simple addition from gene trees: "
-//				// + clusters.getClusterCount());
-//	
-//			}
-//		}
-//		
-//		/**
-//		 * generate a list of sampled gene trees selecting each one randomly
-//		 */
-////		ArrayList<Tree> greedyCandidates = new ArrayList<Tree>();
-////		
-////		for (List<Tree> l : allGreedies) {
-////			int rand = GlobalMaps.random.nextInt(l.size());
-////			STITree temp = new STITree(l.get(rand));
-////			//System.err.println(temp);
-////			resolveByUPGMA((MutableTree) temp, GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier(), this.speciesSimilarityMatrix);
-////			greedyCandidates.add(temp);
-////
-////		}
-//
-//		ArrayList<Tree> baseTrees = new ArrayList<Tree>();
-//		List<STITreeCluster> upgma = new ArrayList<STITreeCluster>();
-//		for(BitSet b : this.speciesSimilarityMatrix.UPGMA()){
-//			STITreeCluster sti = new STITreeCluster(GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier());
-//			sti.setCluster(b);
-//			upgma.add(sti);
-//		}
-//		Tree UPGMA = Utils.buildTreeFromClusters(upgma, GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier(), false);
-//
-//		baseTrees.add(UPGMA);
-//		addBipartitionsFromSignleIndTreesToX(UPGMA, baseTrees,
-//
-//				GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier()); 
-//		
-//
-//		for (int ii=0; ii < secondRoundSampling; ii++) {
-//			for (int j=0 ; j< allGreedies.length ; j++) {
-//				try {
-//
-//					addBipartitionsFromSignleIndTreesToX(allGreedies[j].get(ii), baseTrees,
-//
-//							GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier());
-//				} catch (Exception e) {
-//					System.err.println(allGreedies[j].get(ii));
-//					e.printStackTrace(); 
-//				}
-//				
-//				//System.err
-//				//		.println("Number of clusters added from gene tree "+j+" in round"+ii+" "
-//				//				+ clusters.getClusterCount());
-//			}
-//			System.err
-//			.println("------------------------------");
-//			 gradiant = clusters.getClusterCount() - prev;
-//			 System.err.println("gradient"+ii +": "+ gradiant);
-//			 prev = clusters.getClusterCount();
+//		for (List<Tree> l : allGreedies) {
+//			int rand = GlobalMaps.random.nextInt(l.size());
+//			STITree temp = new STITree(l.get(rand));
+//			//System.err.println(temp);
+//			resolveByUPGMA((MutableTree) temp, GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier(), this.speciesSimilarityMatrix);
+//			greedyCandidates.add(temp);
 //
 //		}
-//		prev = 0;
-//
-//		gradiant = 0;
-//		if (inference.getAddExtra() != 0) {
-//			this.addExtraBipartitionByDistance();
-//			for (int l = 0; l < secondRoundSampling; l++) {
-//				ArrayList<Tree> genes = new ArrayList<Tree>();
-//				for (int j = 0; j < allGreedies.length; j++) {
-//					genes.add(allGreedies[j].get(l));
-//				}
-//				System.err
-//						.println("calculating extra bipartitions to be added at level "
-//								+ inference.getAddExtra() + " ...");
-//				this.addExtraBipartitionByHeuristics(genes,
-//						GlobalMaps.taxonNameMap.getSpeciesIdMapper()
-//								.getSTTaxonIdentifier(),
-//						this.speciesSimilarityMatrix,inference.options.getPolylimit());
-//
-//				System.err
-//						.println("Number of Clusters after addition by greedy: "
-//								+ clusters.getClusterCount());
-//				
-//				 gradiant = clusters.getClusterCount() - prev;
-//				 System.err.println("gradient"+l+" in heuristiic: "+ gradiant);
-//				 prev = clusters.getClusterCount();
-//
-//			}
-//		}
+
+		ArrayList<Tree> baseTrees = new ArrayList<Tree>();
+		List<STITreeCluster> upgma = new ArrayList<STITreeCluster>();
+		for(BitSet b : this.speciesSimilarityMatrix.UPGMA()){
+			STITreeCluster sti = new STITreeCluster(GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier());
+			sti.setCluster(b);
+			upgma.add(sti);
+		}
+		Tree UPGMA = Utils.buildTreeFromClusters(upgma, GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier(), false);
+
+		baseTrees.add(UPGMA);
+		addBipartitionsFromSignleIndTreesToX(UPGMA, baseTrees,
+
+				GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier()); 
+		
+
+		for (int ii=0; ii < secondRoundSampling; ii++) {
+			for (int j=0 ; j< allGreedies.length ; j++) {
+				try {
+
+					addBipartitionsFromSignleIndTreesToX(allGreedies[j].get(ii), baseTrees,
+
+							GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSTTaxonIdentifier());
+				} catch (Exception e) {
+					System.err.println(allGreedies[j].get(ii));
+					e.printStackTrace(); 
+				}
+				
+				//System.err
+				//		.println("Number of clusters added from gene tree "+j+" in round"+ii+" "
+				//				+ clusters.getClusterCount());
+			}
+			System.err
+			.println("------------------------------");
+			 gradiant = clusters.getClusterCount() - prev;
+			 System.err.println("gradient"+ii +": "+ gradiant);
+			 prev = clusters.getClusterCount();
+
+		}
+		prev = 0;
+
+		gradiant = 0;
+		if (inference.getAddExtra() != 0) {
+			this.addExtraBipartitionByDistance();
+			for (int l = 0; l < secondRoundSampling; l++) {
+				ArrayList<Tree> genes = new ArrayList<Tree>();
+				for (int j = 0; j < allGreedies.length; j++) {
+					genes.add(allGreedies[j].get(l));
+				}
+				System.err
+						.println("calculating extra bipartitions to be added at level "
+								+ inference.getAddExtra() + " ...");
+				this.addExtraBipartitionByHeuristics(genes,
+						GlobalMaps.taxonNameMap.getSpeciesIdMapper()
+								.getSTTaxonIdentifier(),
+						this.speciesSimilarityMatrix,inference.options.getPolylimit());
+
+				System.err
+						.println("Number of Clusters after addition by greedy: "
+								+ clusters.getClusterCount());
+				
+				 gradiant = clusters.getClusterCount() - prev;
+				 System.err.println("gradient"+l+" in heuristiic: "+ gradiant);
+				 prev = clusters.getClusterCount();
+
+			}
+		}
 
 
 
@@ -912,6 +933,158 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
         
         return biClusters;              
     }
+    
+	/**
+	 * Main function implementing new heuristics in ASTRAL-II. At this point, we
+	 * require a subsample with a single individual per species.
+	 * 
+	 * @param trees
+	 *            : the input trees contracted to the subsample
+	 * @param sis
+	 *            : the single-individual subsample information
+	 *            
+	 */
+    
+	void addExtraBipartitionByHeuristics(Collection<Tree> contractedTrees,
+			TaxonIdentifier tid, SimilarityMatrix sm, int polylimit) {
+
+		// Greedy trees. These will be based on sis taxon identifier
+		Collection<Tree> allGreedies;
+
+		System.err
+				.println("Adding to X using resolutions of greedy consensus ...");
+		for (Tree tree : contractedTrees) {
+			tree.rerootTreeAtEdge(tid.getTaxonName(0));
+			Trees.removeBinaryNodes((MutableTree) tree);
+		}
+
+		/*
+		 * if (completeTrees.size() < 2) {
+		 * System.err.println("Only "+completeTrees.size() +
+		 * " complete trees found. Greedy-based completion not applicable.");
+		 * return; }
+		 */
+		allGreedies = Utils.greedyConsensus(contractedTrees,
+				this.GREEDY_ADDITION_THRESHOLDS, true, 1, tid, true);
+		int sumDegrees = 0;
+		
+		ArrayList<Integer> deg = new ArrayList<Integer>();
+		for (Tree cons : allGreedies) {			
+			for (TNode greedyNode : cons.postTraverse()) {
+				if (greedyNode.getChildCount() > 2){
+					deg.add(greedyNode.getChildCount());
+				}
+			}
+		}	
+		Collections.sort(deg);
+		
+		if(polylimit == -1){
+	
+			int N = this.GREEDY_ADDITION_MAX_POLYTOMY_MIN+ GlobalMaps.taxonNameMap.getSpeciesIdMapper().getSpeciesCount()* this.GREEDY_ADDITION_MAX_POLYTOMY_MULT;
+			System.err.println("Limit for sigma of degrees:"+ N);
+			int i = 0;
+			while(sumDegrees < N && i < deg.size()){
+				sumDegrees += Math.pow(deg.get(i),2);
+				i++;
+			}
+
+			if(i > 0)
+				polytomySizeLimit = deg.get(i-1);
+			else    
+				polytomySizeLimit = 3; // this means that the tree is fully binary
+		
+		}
+		else
+			polytomySizeLimit = polylimit;
+	
+		System.err.println("polytomy size limit : "+ polytomySizeLimit);
+		System.err.print("discarded polytomies: ");
+		for(int d: deg){
+			if(d > polytomySizeLimit)
+				System.err.print(d+" ");
+		}
+		System.err.println(" "+deg);
+		int th = 0;
+		int max= 0;
+		/**
+		 * For each greedy consensus tree, use it to add extra bipartitions to
+		 * the tree.
+		 */
+		for (Tree cons : allGreedies) {
+			double thresh = this.GREEDY_ADDITION_THRESHOLDS[th];
+			System.err.println("Threshold " + thresh + ":");
+
+			for (TNode greedyNode : cons.postTraverse()) {
+
+				if (greedyNode.isLeaf()) {
+					continue;
+				}
+
+				if (greedyNode.getChildCount() <= 2) {
+//					if(greedyNode.getChildCount() > polytomySizeLimit)
+//						System.err.println("polytomy of size "+greedyNode.getChildCount()+" discarded ");
+					continue;
+				}
+
+				BitSet greedyBS = (BitSet) ((STITreeCluster) ((STINode) greedyNode)
+						.getData()).getBitSet();
+
+				BitSet[] childbs = new BitSet[greedyNode.getChildCount() + 1];
+				int i1 = 0;
+				for (TNode c : greedyNode.getChildren()) {
+					childbs[i1] = (BitSet) ((STITreeCluster) ((STINode) c)
+							.getData()).getBitSet();
+					i1++;
+				}
+				// Compute the complementary cluster of the cluster for this
+				// node
+				// recall: a greedy consensus is defined on unrooted trees and
+				// we are treating the tree as rooted here. Computing
+				// the complementary cluster and adding it to the child list
+				// in effect makes the tree unrooted again
+				BitSet comp = (BitSet) greedyBS.clone();
+				comp.flip(0, tid.taxonCount());
+				childbs[i1] = comp;
+
+				System.err.print("polytomy of size "
+						+ greedyNode.getChildCount());
+
+				// First resolve the polytomy using UPGMA.
+				// this.resolveByUPGMA(childbs, tid ,
+				// this.speciesSimilarityMatrix);
+				this.addSubSampledBitSetToX(
+						this.speciesSimilarityMatrix.resolveByUPGMA(
+								Arrays.asList(childbs), true), tid);
+
+				// Resolve by subsampling the greedy.
+				// Don't get confused. We are not subsampling species
+				// in a greedy consensus tree, which itself, subsamples one
+				// individual per species.
+				int k = 0;
+				
+				for (int j = 0; j < this.GREEDY_ADDITION_DEFAULT_RUNS + k; j++) {
+
+					boolean quadratic = (this.SLOW
+							|| (th < this.GREEDY_DIST_ADDITTION_LAST_THRESHOLD_INDX && j < this.GREEDY_ADDITION_DEFAULT_RUNS)) && greedyNode.getChildCount() <= polytomySizeLimit;
+
+					if (this.sampleAndResolve(childbs, contractedTrees, quadratic, sm, tid,true, false) && k < GREEDY_ADDITION_MAX) {
+						k += this.GREEDY_ADDITION_IMPROVEMENT_REWARD;
+
+						if(k > max)
+							max = k;
+					}
+				}
+				System.err.println("; rounds with additions with at least "
+						+ this.GREEDY_ADDITION_MIN_FREQ + " support: " + k
+						/ this.GREEDY_ADDITION_IMPROVEMENT_REWARD
+						+ "; clusters: " + clusters.getClusterCount());
+				
+			}
+			
+			th = (th + 1) % this.GREEDY_ADDITION_THRESHOLDS.length;
+		}
+		System.err.println("max k is :"+ max);
+	}
 
 	/**
 	 * Main function implementing new heuristics in ASTRAL-II. At this point, we
@@ -922,7 +1095,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 	 * @param sis
 	 *            : the single-individual subsample information
 	 */
-	void addExtraBipartitionByHeuristics(Collection<Tree> contractedTrees,
+	void  addExtraBipartitionByHeuristicsConstrained(Collection<Tree> contractedTrees,
 			TaxonIdentifier tid, SimilarityMatrix sm, int polylimit, Tree extraTree) {
 
 		// Greedy trees. These will be based on sis taxon identifier
@@ -935,24 +1108,11 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 			Trees.removeBinaryNodes((MutableTree) tree);
 		}
 		
-		
 
-		/*
-		 * if (completeTrees.size() < 2) {
-		 * System.err.println("Only "+completeTrees.size() +
-		 * " complete trees found. Greedy-based completion not applicable.");
-		 * return; }
-		 */
 		allGreedies = Utils.greedyConsensus(contractedTrees,
 				this.GREEDY_ADDITION_THRESHOLDS, true, 1, tid, true);
 		
-//		for(Tree tr:allGreedies){
-//			for (TNode greedyNode : tr.postTraverse()) {
-//				if (greedyNode.getChildCount() > 2){
-//					System.err.println("pol: "+ greedyNode.getChildCount());
-//				}
-//			}
-//		}
+
 		TreeCompletion tc = new TreeCompletion();
     	List<Tree> res = new ArrayList<Tree>();
 

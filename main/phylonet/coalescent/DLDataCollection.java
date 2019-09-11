@@ -204,7 +204,7 @@ public class DLDataCollection extends AbstractDataCollection<STBipartition>{
 
 
 	public void addExtraBipartitionsByInput(
-			List<Tree> trees, boolean extraTreeRooted, AbstractInference inference, Tree backbone) {
+			List<Tree> trees, boolean extraTreeRooted) {
 
 		int n = GlobalMaps.taxonIdentifier.taxonCount();
 
@@ -386,6 +386,10 @@ public class DLDataCollection extends AbstractDataCollection<STBipartition>{
 		
 	}
 
+	public void addExtraBipartitionsByInput(
+			List<Tree> trees,  AbstractInference inference, Tree backbone) {
+	}
+	
 
 	/*
 	 * public void addGoodSTB (STBipartition good, int size) {

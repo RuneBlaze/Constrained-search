@@ -1,4 +1,6 @@
-- version 5.6.2:
+- version 5.7.0:
+	- 	
+- version 5.6.3:
 	- add a zero length branch to the root branch that is not the outgroup. Needed for FigTree visualizaiton of multiind
 	
 - version 5.6.2:

@@ -120,6 +120,7 @@ java -jar __astral.jar__ -i in.tree -o out.tre 2>out.log
 * The input gene trees are in the Newick format
 * The input trees can have missing taxa, polytomies (unresolved branches), and also multiple individuals per species.
 *  Taxon names cannot have quotation marks in their names (sorry!). This means you also cannot have weird characters like ? in the name (underscore is fine).
+*  For performing a constrained search, you can provide the constraint tree in newick format to ASTRAL using the `-j` option.
 * When multiple individuals from the same species are available, you can ask ASTRAL to force them to be together in the species tree. To do this, a mapping file needs to be provided using the `-a` option. This mapping file should have one line per species, and each line needs to be in one of two formats:
 
 ```

@@ -32,6 +32,8 @@ public abstract class AbstractInference<T> {
 	protected List<Tree> extraTrees = null;
 	protected List<Tree> toRemoveExtraTrees = null;
 	protected List<Tree> completedTrees = null;
+	protected List<Tree> constraintTree = null;
+	
 	protected boolean removeExtraTree;
 	//protected boolean exactSolution;
 	
@@ -52,7 +54,7 @@ public abstract class AbstractInference<T> {
 	double estimationFactor = 0;
 	
 	public AbstractInference(Options options, List<Tree> trees,
-			List<Tree> extraTrees, List<Tree> toRemoveExtraTrees, List<Tree> completedTrees) {
+			List<Tree> extraTrees, List<Tree> toRemoveExtraTrees, List<Tree> completedTrees, List<Tree> constraintTree) {
 		super();
 		this.options = options;
 		this.trees = trees;
@@ -60,6 +62,7 @@ public abstract class AbstractInference<T> {
 		this.removeExtraTree = options.isRemoveExtraTree();
 		this.toRemoveExtraTrees = toRemoveExtraTrees;
 		this.completedTrees = completedTrees;
+		this.constraintTree = constraintTree;
 		
 		df = new DecimalFormat();
 		df.setMaximumFractionDigits(2);
@@ -311,13 +314,28 @@ public abstract class AbstractInference<T> {
 		if (extraTrees != null && extraTrees.size() > 0) {		
 	        System.err.println("calculating extra bipartitions from extra input trees ...");
 	        
-			dataCollection.addExtraBipartitionsByInput(completedTrees,options.isExtrarooted(), this, extraTrees.get(0));
+			dataCollection.addExtraBipartitionsByInput(extraTrees,options.isExtrarooted());
 			int s = this.dataCollection.clusters.getClusterCount();
 			/*
 			 * for (Integer c: clusters2.keySet()){ s += clusters2.get(c).size(); }
 			 */
 			System.err.println("Number of Clusters after additions from extra trees: "
 					+ s);
+		}
+		
+//		if(extraTrees != null && extraTrees.size() > 0 && constraintTree != null) {	
+//			for(Tree tr:extraTrees)
+//				TreeCompletion.treeCompletionRepeat((STITree)tr, (STITree)constraintTree.get(0), 1);
+//			klj
+//			
+//		}
+		if (constraintTree != null && constraintTree.size()> 0){
+			
+			dataCollection.addExtraBipartitionsByInput(completedTrees, this, constraintTree.get(0));
+			int s = this.dataCollection.clusters.getClusterCount();
+			System.err.println("Number of Clusters after additions from completed trees: ");
+			
+			
 		}
 		
 		if (toRemoveExtraTrees != null && toRemoveExtraTrees.size() > 0 && this.removeExtraTree) {		

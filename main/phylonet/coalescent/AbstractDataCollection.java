@@ -61,7 +61,10 @@ public abstract class AbstractDataCollection <T> {
 	}
 
 	public abstract void addExtraBipartitionsByInput(
-			List<Tree> trees, boolean extraTreeRooted, AbstractInference inference, Tree backbone);
+			List<Tree> trees, boolean extraTreeRooted);
+	
+	public abstract void addExtraBipartitionsByInput(
+			List<Tree> trees, AbstractInference inference, Tree backbone);
 	
 	public abstract void removeExtraBipartitionsByInput(List<Tree> extraTrees,
 			boolean extraTreeRooted);
