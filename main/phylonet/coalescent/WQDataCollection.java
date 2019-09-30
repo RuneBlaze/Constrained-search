@@ -82,7 +82,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 	/**
 	 * Gene trees after completion.
 	 */
-	private List<Tree> completedGeeneTrees;
+	private List<Tree> compatibleCompleteGeneTrees;
 
 	// A reference to user-spcified global options.
 	protected Options options;
@@ -92,7 +92,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 		this.clusters = clusters;
 		this.SLOW = inference.getAddExtra() >= 2;
 		this.originalInompleteGeneTrees = inference.trees;
-		this.completedGeeneTrees = new ArrayList<Tree>();
+		this.compatibleCompleteGeneTrees = new ArrayList<Tree>();
 		this.options = inference.options;
 	}
 
@@ -591,21 +591,12 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 		SpeciesMapper spm = GlobalMaps.taxonNameMap.getSpeciesIdMapper();
 		
 		calculateDistances();
-		if (haveMissing > 0) {
-			completeGeneTrees();
-		} else {
-			this.completedGeeneTrees = new ArrayList<Tree>(this.originalInompleteGeneTrees.size()); 
-			for (Tree t: this.originalInompleteGeneTrees) {
-				this.completedGeeneTrees.add(new STITree(t));
-			}
-		}
-
 		STITreeCluster all = GlobalMaps.taxonIdentifier.newCluster();
 		all.getBitSet().set(0, GlobalMaps.taxonIdentifier.taxonCount());
 		addToClusters(all, GlobalMaps.taxonIdentifier.taxonCount());
 		
-		System.err.println("Building set of clusters (X) from gene trees ");
-
+		// Make gene trees compatible and complete
+		completeGeneTrees(haveMissing != 0);
 
 		/**
 		 * This is where we randomly sample one individual per species before
@@ -623,29 +614,26 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 		int K =100;
 
 		
-		int arraySize = this.completedGeeneTrees.size();
+		int arraySize = this.compatibleCompleteGeneTrees.size();
 		List<Tree> [] allGreedies = new List [arraySize];
 		
 		int prev = 0, gradiant = 0;
 		
+
+
 		
+		System.err.println("Building set of clusters (X) from gene trees ");
+
 		
 		if (GlobalMaps.taxonNameMap.getSpeciesIdMapper().isSingleIndividual()) {
 			int gtindex = 0;
-			ArrayList<Tree> toprint = new ArrayList<Tree>();
-			for (Tree gt : this.completedGeeneTrees) {
+			for (Tree gt : this.compatibleCompleteGeneTrees) {
 				ArrayList<Tree> tmp = new ArrayList<Tree>();
 				STITree gtrelabelled = new STITree( gt);
 				GlobalMaps.taxonNameMap.getSpeciesIdMapper().gtToSt((MutableTree) gtrelabelled);
-				tmp.addAll(preProcessTreesBeforeAddingToX(gtrelabelled));
-				if(options.isOutputCompatibledGenes())
-					toprint.addAll(tmp);
+				tmp.add(gtrelabelled);
 				allGreedies[gtindex++] = tmp;
 			}
-			if(options.isOutputCompatibledGenes() || options.isCompatibleNorun())				
-				OutputTrees(toprint);
-				if(options.isCompatibleNorun())
-					System.exit(0);
 		} else {
 			//System.err.println("In the first round of  sampling "
 				//	+ firstRoundSampling + " samples will be taken");
@@ -667,7 +655,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 			System.err.println("In second round sampling "+secondRoundSampling+" rounds will be done");
 		
 			int gtindex = 0;
-			for (Tree gt : this.completedGeeneTrees) {
+			for (Tree gt : this.compatibleCompleteGeneTrees) {
 			//	System.err.println("gene tree number " + i + " is processing..");
 				ArrayList<Tree> firstRoundSampleTrees = new ArrayList<Tree>();
 	
@@ -866,10 +854,16 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 	/**
 	 * Completes all the gene trees using a heuristic algorithm described in
 	 * Siavash's dissertation. Uses the distance matrix for completion.
+	 * @param haveMissing 
 	 */
-	private void completeGeneTrees() {
-		System.err
-				.println("Will attempt to complete bipartitions from X before adding using a distance matrix.");
+	private void completeGeneTrees(boolean completionNecessary) {
+	
+
+	
+		if (completionNecessary) {
+			System.err.println("Will attempt to complete bipartitions from X before adding using a distance matrix.");
+		}
+		
 		int t = 0;
 		BufferedWriter completedFile = null;
 		if (this.options.isOutputCompletedGenes()) {
@@ -881,17 +875,49 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 				throw new RuntimeException(e);
 			}
 		}
-		for (Tree tr : this.originalInompleteGeneTrees) {
-			Tree trc = getCompleteTree(tr, this.treeAllClusters.get(t++)
-					.getBitSet());
-			this.completedGeeneTrees.add(trc);
-			if (completedFile != null) {
-				try {
-					completedFile.write(trc.toStringWD() + " \n");
-					completedFile.flush();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
+
+		BufferedWriter cFile = null;
+		if (this.options.isOutputCompatibledGenes()) {
+		
+			String fn = options.getOutputFile() + ".compatibled_gene_trees";
+			System.err.println("Outputting compatible gene trees to " + fn);
+			try {
+				cFile = new BufferedWriter(new FileWriter(fn));
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+			
+		for (Tree ot : this.originalInompleteGeneTrees) {
+			
+			// 1. Make trees compatible
+			for (STITree tr: preProcessTreesBeforeAddingToX((STITree) ot)) {
+				if (cFile != null) {
+					try {
+						cFile.write(tr.toStringWD() + " \n");
+						cFile.flush();
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
 				}
+				
+				Tree trc;
+				if (completionNecessary) {
+					// 2. Make trees Complete
+					trc = getCompleteTree(tr, this.treeAllClusters.get(t++).getBitSet());
+					if (completedFile != null) {
+						try {
+							completedFile.write(trc.toStringWD() + " \n");
+							completedFile.flush();
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					}
+				} else {
+					trc = new STITree(tr);
+				}
+				this.compatibleCompleteGeneTrees.add(trc);
 			}
 		}
 		if (completedFile != null) {
@@ -901,6 +927,17 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 				throw new RuntimeException(e);
 			}
 		}
+		
+		if (cFile != null) {
+			try {
+				cFile.close();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		if (options.isCompatibleNorun())
+			System.exit(0);
 	}
 
 	/**
@@ -1524,32 +1561,6 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 	 * } } return gtbs1; }
 	 */
 
-	protected void OutputTrees(List<Tree> trees){
-		System.err
-				.println("Writing compatibled gene trees into file :");
-		BufferedWriter cFile = null;
-		String fn = options.getOutputFile() + ".compatibled_gene_trees";
-		try {
-			cFile = new BufferedWriter(new FileWriter(fn));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		for (Tree tr : trees) {
-			if (cFile != null) {
-				try {
-					cFile.write(tr.toNewick() + " \n");
-					cFile.flush();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
-		if (cFile != null) {
-			try {
-				cFile.close();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
+
+
 }

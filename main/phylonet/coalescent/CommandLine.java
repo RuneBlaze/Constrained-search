@@ -40,7 +40,7 @@ import com.martiansoftware.jsap.Switch;
 import com.martiansoftware.jsap.stringparsers.FileStringParser;
 
 public class CommandLine{
-    protected static String _versinon = "5.6.7";
+    protected static String _versinon = "5.6.8";
 
     protected static SimpleJSAP jsap;
     
@@ -872,6 +872,7 @@ public class CommandLine{
     				if (annotation != 6) {
 	    				for (int i = 0; i < leaves.length; i++) {
 	    					//if (!stLablel) {
+
 	    						GlobalMaps.taxonIdentifier.taxonId(leaves[i]);
 	    						//} else {
 	    						//   GlobalMaps.taxonNameMap.getSpeciesIdMapper().speciesId(leaves[i]);
