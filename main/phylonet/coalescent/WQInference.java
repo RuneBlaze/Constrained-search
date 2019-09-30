@@ -686,7 +686,12 @@ public class WQInference extends AbstractInference<Tripartition> {
 	}
 
 	WQDataCollection newCounter(IClusterCollection clusters) {
-		return new WQDataCollection((WQClusterCollection)clusters, this);
+		if (constraintTree != null && constraintTree.size()> 0){
+			return new WQDataCollectionConstrained((WQClusterCollection)clusters, this);
+		}
+		else {
+			return new WQDataCollection((WQClusterCollection)clusters, this);
+		}
 	}
 
 

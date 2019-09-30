@@ -59,7 +59,7 @@ public class Utils {
 	 * @return
 	 */
 	public static Tree buildTreeFromClusters(Iterable<STITreeCluster> clusters, 
-			TaxonIdentifier identifier, boolean keepclusters) {
+			TaxonIdentifier identifier, boolean keepclusters, boolean checkCompatibility) {
 		
         if ((clusters == null) || (!clusters.iterator().hasNext())) {
           throw new RuntimeException("Empty list of clusters. The function returns a null tree.");
@@ -116,7 +116,10 @@ public class Utils {
           // This should only happen if our set of clusters are not compatible. 
           // TODO: either update the documentation of the method or remove this check
           if (movedChildren.size() == 0 || remainingleaves != 0) {
-              continue;
+        	  if(checkCompatibility)
+        		  throw new RuntimeException("Given set of clusters are not compatible");
+        	  else
+        		  continue;
           }
     
           // Create a new child for this cluster and adopt
@@ -261,7 +264,7 @@ public class Utils {
 	        List<STITreeCluster> clusters = new ArrayList<STITreeCluster>(); 
 	        for (Entry<STITreeCluster, Integer> entry : countSorted) {
 	        	if (threshold > (entry.getValue()+.0d)/treecount) {	
-	        		outTrees.add(0,Utils.buildTreeFromClusters(clusters, taxonIdentifier, keepclusters));
+	        		outTrees.add(0,Utils.buildTreeFromClusters(clusters, taxonIdentifier, keepclusters, false));
 	        		ti--;
 	        		if (ti < 0) {
 	        			break;
@@ -271,7 +274,7 @@ public class Utils {
 	    		clusters.add(entry.getKey());
 	        }
 	        while (ti >= 0) {
-	        	outTrees.add(0, Utils.buildTreeFromClusters(clusters, taxonIdentifier, keepclusters));
+	        	outTrees.add(0, Utils.buildTreeFromClusters(clusters, taxonIdentifier, keepclusters,false));
 	    		ti--;
 	        }
         }

@@ -3,6 +3,7 @@ package phylonet.coalescent;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -238,7 +239,7 @@ public abstract class AbstractInference<T> {
 			}
 			sol._st = tr;
 		} else {
-			sol._st = Utils.buildTreeFromClusters(minClusters, spm.getSTTaxonIdentifier(), false);
+			sol._st = Utils.buildTreeFromClusters(minClusters, spm.getSTTaxonIdentifier(), false, false);
 		}
 
 		/* HashMap<TNode,BitSet> map = new HashMap<TNode,BitSet>();
@@ -304,7 +305,10 @@ public abstract class AbstractInference<T> {
 		 */
 		dataCollection.formSetX(this);
 
-		
+		if(options.isExactSolution() && constraintTree.size() > 0){
+			System.err.println("Exact option for search space does not work with constrained version.");
+			System.exit(0);
+		}
 		if (options.isExactSolution()) {
 	          System.err.println("calculating all possible bipartitions ...");
 		    dataCollection.addAllPossibleSubClusters(this.dataCollection.clusters.getTopVertex().getCluster());
@@ -314,6 +318,31 @@ public abstract class AbstractInference<T> {
 		if (extraTrees != null && extraTrees.size() > 0) {		
 	        System.err.println("calculating extra bipartitions from extra input trees ...");
 	        
+	        if (constraintTree != null && constraintTree.size()> 0){
+	        	ArrayList<Tree> toremove = new ArrayList<Tree>();
+	        	TaxonIdentifier tid = new TaxonIdentifier();
+        		String[] leaves = constraintTree.get(0).getLeaves();
+                for (int i = 0; i < leaves.length; i++) 
+                    tid.taxonId(leaves[i]);
+                
+	        	for(Tree tr : extraTrees){
+	        		STITree t = new STITree(tr);
+	        		t.constrainByLeaves(Arrays.asList(constraintTree.get(0).getLeaves()));
+	        		List<STITreeCluster> Clusters = Utils.getGeneClusters(t,tid );
+	        		Clusters.addAll(Utils.getGeneClusters(constraintTree.get(0), tid));
+	        		try {
+						Utils.buildTreeFromClusters(Clusters, tid, false, true);
+					} catch (Exception e) {
+						// TODO: handle exception
+						System.err.println("Extra tree is incompatible with constraint tree");
+						toremove.add(tr);
+					}
+
+	        		
+	        	}
+	        	extraTrees.removeAll(toremove);
+	        }
+	        
 			dataCollection.addExtraBipartitionsByInput(extraTrees,options.isExtrarooted());
 			int s = this.dataCollection.clusters.getClusterCount();
 			/*
@@ -322,21 +351,7 @@ public abstract class AbstractInference<T> {
 			System.err.println("Number of Clusters after additions from extra trees: "
 					+ s);
 		}
-		
-//		if(extraTrees != null && extraTrees.size() > 0 && constraintTree != null) {	
-//			for(Tree tr:extraTrees)
-//				TreeCompletion.treeCompletionRepeat((STITree)tr, (STITree)constraintTree.get(0), 1);
-//			klj
-//			
-//		}
-		if (constraintTree != null && constraintTree.size()> 0){
-			
-			dataCollection.addExtraBipartitionsByInput(completedTrees, this, constraintTree.get(0));
-			int s = this.dataCollection.clusters.getClusterCount();
-			System.err.println("Number of Clusters after additions from completed trees: ");
-			
-			
-		}
+
 		
 		if (toRemoveExtraTrees != null && toRemoveExtraTrees.size() > 0 && this.removeExtraTree) {		
 	        System.err.println("Removing extra bipartitions from extra input trees ...");

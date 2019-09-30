@@ -126,6 +126,8 @@ public class CommandLine{
 	                        + " -k bootstraps: outputs individual bootstrap replicates to a file called [output file name].[i].bs\n"
 	                        + " -k bootstraps_norun: just like -k bootstraps, but exits after outputting bootstraps.\n"
 	                        + " -k searchspace_norun: outputs the search space and exits; use -k searchspace to continue the run after outputting the search space."
+	                        + " -k compatible_trees: outputs gene trees made compatible with constraint tree to a file [output file name].compatible_gene_trees"
+	                        + " -k compatible_trees_norun: outputs gene trees made compatible with constraint tree to a file and exit [output file name].compatible_gene_trees"	                 
 	                        + "When -k option is used, -o option needs to be given. "
 	                        + "The file name specified using -o is used as the prefix for the name of the extra output files.").setAllowMultipleDeclarations(true),
 
@@ -170,11 +172,11 @@ public class CommandLine{
                             + " of new  resolutions are added. ASTRAL-III sets automatic limits to guarantee polynomial"
                             + " time running time."),
 	                                
-//	                new Switch( "duplication",
-//	                        JSAP.NO_SHORTFLAG, "dup",
-//	                        "Solves MGD problem. Minimizes the number duplications required to explain "
-//	                        + "gene trees using DynaDup algorithm (Bayzid, 2011). Note that with this option, "
-//	                        + "DynaDyp would be used *instead of* ASTRAL."),
+	                new Switch( "duplication",
+	                        JSAP.NO_SHORTFLAG, "dup",
+	                        "Solves MGD problem. Minimizes the number duplications required to explain "
+	                        + "gene trees using DynaDup algorithm (Bayzid, 2011). Note that with this option, "
+	                        + "DynaDyp would be used *instead of* ASTRAL."),
 	                                            
                     new Switch("exact",
                             'x', "exact",
@@ -375,7 +377,9 @@ public class CommandLine{
 					"bootstraps".equals(koption) ||
 					"bootstraps_norun".equals(koption)||
 					"searchspace_norun".equals(koption)||
-					"searchspace".equals(koption)) {
+					"searchspace".equals(koption) ||
+					"compatible_trees".equals(koption)||
+					"compatible_trees_norun".equals(koption)) {
 					keepOptions.add(koption);
 				} else {
 					throw new JSAPException("-k "+koption+" not recognized.");
@@ -442,7 +446,8 @@ public class CommandLine{
 		    if (keepOptions.contains("bootstraps_norun") ||
 			    	keepOptions.contains("bootstraps")) {
 		    	System.err.println("bootstrap files written to files "+ outfile + ( "." + 0 + ".bs" ) + 
-		    			" to "+outfile + ( "." + config.getInt("replicates") + ".bs" ));
+		    			" to "+outfile
+		    			+ ( "." + config.getInt("replicates") + ".bs" ));
 		    }
 		    if (keepOptions.contains("bootstraps_norun")) {
 		    	System.err.println("Exiting after outputting the bootstrap files");
@@ -455,7 +460,7 @@ public class CommandLine{
     			config.getBoolean("exact"), 
     			criterion > 0, 1, 
     			config.getInt("extraLevel"),
-    			keepOptions.contains("completed"), 
+    			keepOptions.contains("completed"), keepOptions.contains("compatible_trees"), keepOptions.contains("compatible_trees_norun"),
     			keepOptions.contains("searchspace_norun") || keepOptions.contains("searchspace"), 
     			!keepOptions.contains("searchspace_norun"),
     			config.getInt("branch annotation level"), 
@@ -537,6 +542,8 @@ public class CommandLine{
             
         List<String> toScore = null;
         if (config.getFile("score species trees") != null) {
+        	if(config.getFile("constraint tree") != null)
+        		System.err.println("!!Constraint tree will be ignored!!");
         	System.err.println("Scoring "+config.getFile("score species trees"));
         	toScore = readTreeFileAsString(config.getFile("score species trees"));
             runScore(criterion, rooted, mainTrees, outbuffer,
@@ -614,8 +621,8 @@ public class CommandLine{
 		List<Tree> completedTrees = new ArrayList<Tree>();
 		List<Tree> toRemoveExtraTrees = new ArrayList<Tree>();
 		
-		if (config.getFile("constraint tree") != null &&constraintTree.size()!=0) {
-			if (config.getFile("mapping") != null) {
+		if (config.getFile("constraint tree") != null) {
+			if (config.getFile("mapping file") != null) {
 				System.err.println("Constrained version can not be used with Multi-individual version of ASTRAL for now.");
 				System.exit(0);
 			}
@@ -639,10 +646,11 @@ public class CommandLine{
 	        	List<Tree> res = new ArrayList<Tree>();
 
 	        	for(Tree tr:mainTrees){
-	        		res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)constraintTree.get(0),1));
+	        		//res.addAll(tc.treeCompletionRepeat((STITree)tr, (STITree)constraintTree.get(0),1));
+	        		res.add(tr);
 	        	}
-	        	for(Tree tr: res)
-	        		System.out.println(tr.toNewick());
+	        	//for(Tree tr: res)
+	        	//	System.out.println(tr.toNewick());
 
 	        	completedTrees = new ArrayList<Tree>(res);
 	        	System.err.println("All gene trees are converted to be compatible with species tree.");
