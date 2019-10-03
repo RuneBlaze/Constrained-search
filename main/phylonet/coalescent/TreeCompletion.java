@@ -73,37 +73,35 @@ public class TreeCompletion {
 
 	}
 	
-	static STITree addToTree(STITree tree , STINode adoptingNode, STINode toMoveNode){
-		
-		STINode newNode = null;
-		try {
-			newNode = new STITree(((STINode<Double>) toMoveNode).toNewick()).getRoot();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if(!adoptingNode.isRoot()){
-			STINode newinternalnode = adoptingNode.getParent().createChild();
-			newinternalnode.adoptChild(adoptingNode);
-			newinternalnode.createChild(newNode);
-//			if(null != tree.getNode(newNode.getName()))
-//				System.err.println("heyyy");
-			return tree;
-		}
-		else{
-
-			STINode newinternalnode = adoptingNode.createChild();
-			TNode child = (TNode) adoptingNode.getChildren().iterator().next();
-			newinternalnode.adoptChild((TMutableNode) child );
-			newinternalnode.createChild(newNode);
-			return tree;
-			
-		}
-		
-	}
+//	static STITree addToTree(STITree tree , STINode adoptingNode, STINode toMoveNode){
+//		
+//		STINode newNode = null;
+//		try {
+//			newNode = new STITree(((STINode<Double>) toMoveNode).toNewick()).getRoot();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (ParseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		if(!adoptingNode.isRoot()){
+//			STINode newinternalnode = adoptingNode.getParent().createChild();
+//			newinternalnode.adoptChild(adoptingNode);
+//			newinternalnode.createChild(newNode);
+//			return tree;
+//		}
+//		else{
+//
+//			STINode newinternalnode = adoptingNode.createChild();
+//			TNode child = (TNode) adoptingNode.getChildren().iterator().next();
+//			newinternalnode.adoptChild((TMutableNode) child );
+//			newinternalnode.createChild(newNode);
+//			return tree;
+//			
+//		}
+//		
+//	}
 
 	
 static STITree addToTreePolytomy2(STITree tree , STINode adoptingNode, ArrayList<STINode> redChildren){
@@ -142,7 +140,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 			for(STINode n : redChildren){
 				if(!n.isLeaf())
 					n.setName("");
-					newnodes.add(new STITree(((STINode<Double>)n).toNewick()).getRoot());
+				newnodes.add(new STITree(((STINode<Double>)n).toNewick()).getRoot());
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -158,9 +156,8 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 			newinternalnode.adoptChild(adoptingNode);
 			for(STINode n : newnodes){
 				newinternalnode.createChild(n);
-			}
+			}			
 			
-			return tree;
 		}
 		else{
 				
@@ -169,10 +166,9 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 			newinternalnode.adoptChild((TMutableNode) child );
 			for(STINode n : newnodes)
 				newinternalnode.createChild(n);
-			return tree;
 			
-
 		}
+		return tree;
 		
 	}
 	
@@ -239,16 +235,16 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 		
 	}
 	
-	static ArrayList<STITree> treeCompletionRepeat(STITree gTree, STITree sTree, int REPEATS){
-		SchieberVishkinLCA lcaLookup = new SchieberVishkinLCA(sTree);
-		String[] gtLeaves = gTree.getLeaves();
-		String[] stLeaves = sTree.getLeaves();
+	static ArrayList<STITree> treeCompletionRepeat(STITree referenceTree, STITree constraintTree, int REPEATS){
+		SchieberVishkinLCA lcaLookup = new SchieberVishkinLCA(constraintTree);
+		String[] gtLeaves = referenceTree.getLeaves();
+		String[] stLeaves = constraintTree.getLeaves();
 		List<String> common = new ArrayList<String>(Arrays.asList(gtLeaves));
 		common.retainAll(Arrays.asList(stLeaves));
 		ArrayList<STITree> results = new ArrayList<STITree>();
 		ArrayList<STITree> temps = new ArrayList<STITree>();
 		for(int i=0; i< REPEATS; i++){
-			temps.add(new STITree(sTree));
+			temps.add(new STITree(constraintTree));
 		}
 		
 		ArrayList<Integer> randomRoots = new ArrayList<Integer>();
@@ -259,12 +255,13 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 		for(int i=0 ; i< REPEATS && i < common.size(); i++){
 			String root = common.get(randomRoots.get(i));
 			System.err.println("Both constraint tree and gene tree repeat "+i+" are rooted at "+root);
-			temps.get(i).rerootTreeAtNode(temps.get(i).getNode(root));
-			gTree.rerootTreeAtNode(gTree.getNode(root));
-			results.add(treeCompletion(gTree, temps.get(i)));
+			Trees.removeBinaryNodes(temps.get(i));
+			temps.get(i).rerootTreeAtEdge(temps.get(i).getNode(root));
+			Trees.removeBinaryNodes(referenceTree);
+			referenceTree.rerootTreeAtEdge(referenceTree.getNode(root));
+			results.add(treeCompletion(referenceTree, temps.get(i)));
 		}
 		return results;
-		
 		
 	}
 	static STITree treeCompletion(STITree gTree, STITree sTree){
@@ -284,15 +281,14 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 
 	            if(data.equals("BM")){
 	            	
-	            	int childrenCount = mynode.getChildCount();
+//	            	int childrenCount = mynode.getChildCount();
 	            	int redchild = 0;
 	            	ArrayList<STINode> redChildren = new ArrayList<STINode>();
 	            	ArrayList<STINode> nonRed = new ArrayList<STINode>();
 	            	for(TNode child:mynode.getChildren()){
 						String childData = (String) ((NodeInfo) ((STINode) child).getData()).getColor();
 	            		if(childData.equals("R")){
-	            			redChildren.add((STINode) child);
-	            			
+	            			redChildren.add((STINode) child);            			
 	            			redchild += 1;
 	            		}
 	            		else{
@@ -303,10 +299,10 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 	    	        STINode snode = sTree.getNode(id);
 	    	        
 	    	        if(nonRed.size()==1 && ((NodeInfo) snode.getData()).getGrDes() == ((NodeInfo) nonRed.get(0).getData()).getGrDes()){
-	    	        		sTree = addToTreePolytomy(sTree, snode,  redChildren);
+	    	        		sTree = addToTreePolytomy(sTree, snode,  redChildren); 
 	    	        }
 	    	        else{
-	    	        		sTree = addToTreePolytomy2(sTree, snode,  redChildren);
+	    	        		sTree = addToTreePolytomy2(sTree, snode,  redChildren);// does not create a new node
 	    	        }
 	    	        
 	    	        //if there is only one non-red child,it means that we definitely don't have this 

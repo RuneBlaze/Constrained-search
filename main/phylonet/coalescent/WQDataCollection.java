@@ -263,16 +263,22 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 	 */
 	Tree getCompleteTree(Tree tr, BitSet gtAllBS) {
 
-		if (gtAllBS.cardinality() < 3) {
+		if (tr.getLeafCount() < 3) {
 			throw new RuntimeException("Tree " + tr.toNewick()
 					+ " has less than 3 taxa; it cannot be completed");
 		}
 		STITree trc = new STITree(tr);
 
+		TreeSet<String> leaves = new TreeSet<String>(Arrays.asList(tr.getLeaves()));
+		
 		Trees.removeBinaryNodes(trc);
-
+		
 		for (int missingId = gtAllBS.nextClearBit(0); missingId < GlobalMaps.taxonIdentifier
 				.taxonCount(); missingId = gtAllBS.nextClearBit(missingId + 1)) {
+			
+			if (leaves.contains(GlobalMaps.taxonIdentifier.getTaxonName(missingId))){
+				continue; // This has been added already by someone else. 
+			}
 
 			int closestId = similarityMatrix.getClosestPresentTaxonId(gtAllBS,
 					missingId);
@@ -905,7 +911,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 				Tree trc;
 				if (completionNecessary) {
 					// 2. Make trees Complete
-					trc = getCompleteTree(tr, this.treeAllClusters.get(t++).getBitSet());
+					trc = getCompleteTree(tr, this.treeAllClusters.get(t).getBitSet());
 					if (completedFile != null) {
 						try {
 							completedFile.write(trc.toStringWD() + " \n");
@@ -919,6 +925,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 				}
 				this.compatibleCompleteGeneTrees.add(trc);
 			}
+			t = t+1;
 		}
 		if (completedFile != null) {
 			try {
