@@ -125,9 +125,9 @@ public class CommandLine{
 	                          " -k completed: outputs completed gene trees (i.e. after adding missing taxa) to a file called [output file name].completed_gene_trees.\n"
 	                        + " -k bootstraps: outputs individual bootstrap replicates to a file called [output file name].[i].bs\n"
 	                        + " -k bootstraps_norun: just like -k bootstraps, but exits after outputting bootstraps.\n"
-	                        + " -k searchspace_norun: outputs the search space and exits; use -k searchspace to continue the run after outputting the search space."
-	                        + " -k compatible_trees: outputs gene trees made compatible with constraint tree to a file [output file name].compatible_gene_trees"
-	                        + " -k compatible_trees_norun: outputs gene trees made compatible with constraint tree to a file and exit [output file name].compatible_gene_trees"	                 
+	                        + " -k searchspace_norun: outputs the search space and exits; use -k searchspace to continue the run after outputting the search space.\n"
+	                        + " -k compatible_trees: outputs gene trees made compatible with constraint tree to a file [output file name].compatible_gene_trees\n"
+	                        + " -k compatible_trees_norun: outputs gene trees made compatible with constraint tree to a file and exit [output file name].compatible_gene_trees\n"	                 
 	                        + "When -k option is used, -o option needs to be given. "
 	                        + "The file name specified using -o is used as the prefix for the name of the extra output files.").setAllowMultipleDeclarations(true),
 

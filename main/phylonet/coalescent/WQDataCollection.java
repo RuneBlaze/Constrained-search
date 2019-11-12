@@ -901,7 +901,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 			for (STITree tr: preProcessTreesBeforeAddingToX((STITree) ot)) {
 				if (cFile != null) {
 					try {
-						cFile.write(tr.toStringWD() + " \n");
+						cFile.write(tr.toNewick() + " \n");
 						cFile.flush();
 					} catch (IOException e) {
 						throw new RuntimeException(e);
@@ -914,7 +914,7 @@ public class WQDataCollection extends AbstractDataCollection<Tripartition>
 					trc = getCompleteTree(tr, this.treeAllClusters.get(t).getBitSet());
 					if (completedFile != null) {
 						try {
-							completedFile.write(trc.toStringWD() + " \n");
+							completedFile.write(trc.toNewick() + " \n");
 							completedFile.flush();
 						} catch (IOException e) {
 							throw new RuntimeException(e);
