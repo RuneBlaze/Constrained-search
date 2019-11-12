@@ -69,6 +69,11 @@ public class WQDataCollectionConstrained extends WQDataCollection {
 	protected boolean shouldDoQuadratic(int th, TNode greedyNode, int j) {
 		return false; 
 	}
+	
+	@Override
+	public void addExtraBipartitionByDistance(){
+		return;
+	}
 
 	private List<Tree> constraintTree;
 
