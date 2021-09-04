@@ -2,6 +2,12 @@ package phylonet.coalescent;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -56,22 +62,50 @@ public class TreeCompletion {
 //		String tr1 = "(193,(15,(62,(((99,43),(26,(106,(137,78)))),(((66,(3,(102,(151,165)))),(16,((186,((76,(124,(51,79))),(98,(123,((107,195),(131,(168,104))))))),(((95,121),(9,136)),((6,(67,41)),(81,((45,130),(198,(12,47))))))))),((((153,53),(159,44)),((183,42),((196,22),((19,(40,(14,110))),(156,((173,111),(13,185))))))),((83,((74,148),(146,(109,118)))),(((8,(50,10)),((24,88),((92,38),(132,(75,154))))),((31,((134,(157,82)),((49,72),((188,149),(119,(184,143)))))),(128,(((69,(((29,158),(71,96)),((179,28),((100,87),((126,122),(59,(120,23))))))),((181,((77,30),(152,(70,(85,46))))),((150,(187,(37,61))),((89,182),(161,(135,7)))))),(0,((((113,36),(63,34)),((172,178),((39,65),(68,(166,(60,86)))))),(((145,48),((127,(169,(171,(199,176)))),((32,(18,191)),(180,((142,(105,(117,175))),(((17,93),((162,52),(108,54))),((20,94),((138,(192,160)),(197,(200,141)))))))))),((((58,(114,167)),(57,(139,25))),(2,(((33,1),(190,21)),(5,((80,163),(55,(101,(189,84)))))))),(((73,112),(56,(4,140))),(91,((147,11),(((97,133),((177,27),(144,129))),((64,(125,((90,170),(174,(164,103))))),(35,((115,194),(155,116)))))))))))))))))))))));";
 		//(18,(7,2),((3,99),4),((11,(5,9)a,0,22,30)b,6))c;
 //		String tr2 = "(9,7,3,4);";
-		String tr1 = args[0];
-		String tr2 = args[1]; //backbone
-		NewickReader nr = new NewickReader(new StringReader(tr1));
-		STITree<Double> gt = new STITree<Double>(true);
-		nr.readTree(gt);
+		// String tr1 = args[0];
+		// String tr2 = args[1]; //backbone
+		String gtreesfp = args[0];
+		String ctreefp = args[1];
 		
-		NewickReader nr2 = new NewickReader(new StringReader(tr2));
-		STITree<Double> st = new STITree<Double>(true);
-		nr2.readTree(st);
-		STINode newNode = new STITree(((STINode<Double>) gt.getNode("18")).toNewick()).getRoot();
+		List<String> gtreestrs = readTreeFileAsString(new File(gtreesfp));
+		String ctreestr = readTreeFileAsString(new File(ctreefp)).get(0);
 
-		System.err.println(st.toNewick());
-		st = treeCompletion(gt,st);
-		System.err.println("out: "+st.toNewick());
+		NewickReader nr2 = new NewickReader(new StringReader(ctreestr));
+		STITree<Double> ct = new STITree<Double>(true);
+		nr2.readTree(ct);
+
+		for (String gtreestr : gtreestrs) {
+			NewickReader nr = new NewickReader(new StringReader(gtreestr));
+			STITree<Double> gt = new STITree<Double>(true);
+			nr.readTree(gt);
+			// System.out.println(gt.toNewick());
+			// gt = treeCompletion(ct,gt);
+
+			for (STITree tre: treeCompletionRepeat(gt, ct, 1)) {
+				System.out.println(tre.toNewick());
+			}
+		}
+		
+		// STINode newNode = new STITree(((STINode<Double>) gt.getNode("18")).toNewick()).getRoot();
+		// System.err.println(st.toNewick());
+		// System.err.println("out: "+st.toNewick());
 
 	}
+
+	private static List<String> readTreeFileAsString(File file)
+    				throws FileNotFoundException, IOException {
+    	String line;		
+    	List<String> trees = new ArrayList<String>();
+    	BufferedReader treeBufferReader = new BufferedReader(new FileReader(file));
+		while ((line = treeBufferReader .readLine()) != null) {
+    		if (line.length() > 0) {
+    			line = line.replaceAll("\\)[^,);]*", ")");
+    			trees.add(line);
+    		}
+    	}
+    	treeBufferReader.close();
+    	return trees;
+    }
 	
 //	static STITree addToTree(STITree tree , STINode adoptingNode, STINode toMoveNode){
 //		
@@ -249,7 +283,7 @@ static STITree addToTreePolytomy(STITree tree , STINode adoptingNode, ArrayList<
 		
 		ArrayList<Integer> randomRoots = new ArrayList<Integer>();
 		for(int i=0;i< REPEATS && i < common.size() ;i++){
-			randomRoots.add(GlobalMaps.random.nextInt(common.size()));
+			randomRoots.add(new Random().nextInt(common.size()));
 		}
 
 		for(int i=0 ; i< REPEATS && i < common.size(); i++){
